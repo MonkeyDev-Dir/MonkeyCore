@@ -6,10 +6,12 @@ return [
     'failed' => 'Estas credenciales no coinciden con nuestros registros.',
     'login' => [
         'back' => 'Volver al panel',
+        'change_password' => 'Cambiar contraseña',
         'description' => 'Ingresa tu correo electrónico y contraseña para iniciar sesión.',
         'email' => 'Correo electrónico',
         'forgot_password' => '¿Olvidaste tu contraseña?',
         'google' => 'Iniciar sesión con Google',
+        'loading' => 'Validando...',
         'logo_alt' => 'Logotipo de MonkeyCore',
         'no_account' => '¿No tienes una cuenta?',
         'or' => 'O',

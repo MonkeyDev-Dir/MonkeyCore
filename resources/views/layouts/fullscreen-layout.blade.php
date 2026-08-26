@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full" data-theme-context="light">
 
 <head>
     <meta charset="utf-8">
@@ -8,14 +8,11 @@
 
     <title>{{ $title ?? 'Iniciar sesión' }} | {{ config('app.name', 'MonkeyCore') }}</title>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/sass/app.scss', 'resources/js/app.js'])
 
     <script>
         (() => {
-            const savedTheme = localStorage.getItem('theme');
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-
-            document.documentElement.classList.toggle('dark', (savedTheme || systemTheme) === 'dark');
+            document.documentElement.classList.remove('dark');
         })();
     </script>
 </head>

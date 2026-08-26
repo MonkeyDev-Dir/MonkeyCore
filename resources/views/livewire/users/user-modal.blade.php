@@ -1,7 +1,7 @@
-<div x-data="{ modalOpen: false, passwordVisible: false, confirmationVisible: false }"
-    x-on:open-user-create.window="modalOpen = true; $wire.openCreate()"
-    x-on:open-user-edit.window="modalOpen = true; $wire.edit($event.detail.userId)"
-    x-on:user-saved.window="modalOpen = false; Toast.fire({ icon: 'success', title: $event.detail.message }); setTimeout(() => window.location.reload(), 700)">
+<div x-data="{ modalOpen: false, modalReady: false, passwordVisible: false, confirmationVisible: false }"
+    x-on:open-user-create.window="modalOpen = true; modalReady = false; $wire.openCreate().then(() => modalReady = true)"
+    x-on:open-user-edit.window="modalOpen = true; modalReady = false; $wire.edit($event.detail.userId).then(() => modalReady = true)"
+    x-on:user-saved.window="modalOpen = false; Toast.fire({ icon: 'success', title: $event.detail.message })">
     <div x-cloak x-show="modalOpen" x-transition.opacity
         class="fixed inset-0 z-[100000] flex items-start justify-center overflow-y-auto p-3 sm:items-center sm:p-5">
         <div x-transition.opacity class="fixed inset-0 bg-gray-950/70" x-on:click="modalOpen = false" wire:click="close"></div>
@@ -12,12 +12,21 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="scale-100 opacity-100"
             x-transition:leave-end="scale-95 opacity-0"
-            class="relative z-10 my-auto max-h-[calc(100vh-1.5rem)] w-full max-w-[700px] overflow-x-hidden overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_10px_rgb(0_0_0_/_0.12)] dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_4px_10px_rgb(0_0_0_/_0.30)] sm:rounded-3xl sm:p-5 lg:p-8">
-            <button type="button" x-on:click="modalOpen = false" wire:click="close" aria-label="{{ __('Cerrar') }}"
-                class="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-white/[0.05]">
-                <span class="text-2xl leading-none">&times;</span>
-            </button>
+            class="relative z-10 my-auto max-h-[calc(100vh-1.5rem)] w-full max-w-[700px] overflow-x-hidden overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_10px_rgb(0_0_0_/_0.12)] dark:border-gray-800 dark:bg-gray-900 dark:shadow-[0_4px_10px_rgb(0_0_0_/_0.30)] sm:rounded-3xl sm:p-5 lg:p-8"
+            x-bind:aria-busy="!modalReady">
+            <x-common.modal-close x-on:click="modalOpen = false" wire:click="close" />
 
+            <div x-cloak x-show="!modalReady" class="flex min-h-[520px] items-center justify-center" role="status" aria-live="polite">
+                <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                    <svg class="h-5 w-5 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V1C6.925 1 2 5.925 2 12h2Zm8 8a8 8 0 0 1-8-8H1c0 6.075 4.925 11 11 11v-3Z"></path>
+                    </svg>
+                    <span>{{ __('Cargando información...') }}</span>
+                </div>
+            </div>
+
+            <div x-cloak x-show="modalReady">
             <div class="mb-6 pr-8">
                 <h2 class="text-2xl font-semibold text-gray-800 dark:text-white/90">
                     {{ $userId === null ? __('Nuevo usuario') : __('Editar usuario') }}
@@ -28,6 +37,7 @@
             </div>
 
             <form wire:submit="save" class="space-y-5">
+                <fieldset wire:loading.attr="disabled" wire:target="lookupPerson" class="contents">
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-12">
                     <div class="col-span-12 min-w-0 sm:col-span-6">
                         <label for="modal-ide" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Identificación') }}</label>
@@ -36,7 +46,12 @@
                             @if($userId === null)
                                 <button type="button" wire:click="lookupPerson" wire:loading.attr="disabled" wire:target="lookupPerson" aria-label="{{ __('Consultar identificación') }}" title="{{ __('Consultar identificación') }}" class="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-brand-500 px-3 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50">
                                     <span wire:loading.remove wire:target="lookupPerson">{{ __('Consultar') }}</span>
-                                    <span wire:loading wire:target="lookupPerson">{{ __('Consultando...') }}</span>
+                                    <span wire:loading wire:target="lookupPerson" aria-label="{{ __('Consultando...') }}">
+                                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V1C6.925 1 2 5.925 2 12h2Zm8 8a8 8 0 0 1-8-8H1c0 6.075 4.925 11 11 11v-3Z"></path>
+                                        </svg>
+                                    </span>
                                 </button>
                             @endif
                         </div>
@@ -95,7 +110,9 @@
                         <span wire:loading wire:target="save">{{ __('Guardando...') }}</span>
                     </button>
                 </div>
+                </fieldset>
             </form>
+            </div>
         </div>
     </div>
 </div>

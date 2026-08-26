@@ -1,0 +1,29 @@
+.app-toast {
+    border: 1px solid var(--color-gray-200) !important;
+    border-radius: 0.75rem !important;
+    background: var(--color-white) !important;
+    padding: 0.75rem 0.875rem !important;
+    box-shadow: var(--shadow-theme-md) !important;
+}
+
+.app-toast-title {
+    align-self: center !important;
+    margin: 0 !important;
+    color: var(--color-gray-700) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    line-height: 1rem !important;
+}
+
+.app-toast-progress {
+    background: var(--color-brand-500) !important;
+}
+
+.dark .app-toast {
+    border-color: var(--color-gray-800) !important;
+    background: var(--color-gray-900) !important;
+}
+
+.dark .app-toast-title {
+    color: var(--color-gray-200) !important;
+}

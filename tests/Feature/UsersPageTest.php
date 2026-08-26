@@ -1,8 +1,10 @@
 <?php
 
 use App\Livewire\Users\UserModal;
+use App\Livewire\Users\UsersTable;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 it('shows the users page to authenticated users', function () {
@@ -25,7 +27,21 @@ it('opens the user modal from the user name', function () {
 
     $this->actingAs($viewer)
         ->get('/users')
-        ->assertSee("open-user-edit', { detail: { userId: {$user->id} }", false);
+        ->assertSee("open-user-edit', { detail: { userId: {$user->id} }", false)
+        ->assertSee('modalReady', false)
+        ->assertSee(__('Cargando información...'));
+});
+
+it('refreshes the users table after a user is saved without reloading the page', function () {
+    $viewer = User::factory()->create();
+    User::factory()->create(['email' => 'before@example.com']);
+
+    $table = Livewire::actingAs($viewer)->test(UsersTable::class);
+    $newUser = User::factory()->create(['email' => 'after@example.com']);
+
+    $table
+        ->dispatch('user-saved', message: __('Usuario creado correctamente.'))
+        ->assertSee($newUser->email);
 });
 
 it('updates a user from the edit page', function () {
@@ -47,6 +63,7 @@ it('updates a user from the edit page', function () {
 });
 
 it('creates a user through the livewire modal', function () {
+    Storage::fake('public');
     $viewer = User::factory()->create();
 
     Livewire::actingAs($viewer)
@@ -62,7 +79,25 @@ it('creates a user through the livewire modal', function () {
         ->assertSet('isOpen', false)
         ->assertDispatched('user-saved');
 
-    expect(User::where('email', 'new@example.com')->exists())->toBeTrue();
+    $newUser = User::where('email', 'new@example.com')->firstOrFail();
+
+    expect($newUser->avatar_path)->toStartWith('avatars/');
+    Storage::disk('public')->assertExists($newUser->avatar_path);
+});
+
+it('regenerates the authenticated user avatar from the profile', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('profile.avatar'))
+        ->assertRedirectToRoute('profile')
+        ->assertSessionHas('success', 'Avatar actualizado correctamente.');
+
+    $avatarPath = $user->refresh()->avatar_path;
+
+    expect($avatarPath)->toStartWith('avatars/');
+    Storage::disk('public')->assertExists($avatarPath);
 });
 
 it('validates required fields in the livewire modal', function () {

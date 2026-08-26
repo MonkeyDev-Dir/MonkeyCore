@@ -14,7 +14,11 @@
         type="button"
     >
         <span class="mr-3 overflow-hidden rounded-full h-11 w-11">
-            <img src="/images/user/owner.png" alt="{{ __('navigation.user_alt') }}" />
+            @if(auth()->user()->avatarUrl())
+                <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ __('Avatar de') }} {{ auth()->user()->name }}" />
+            @else
+                <img src="/images/user/owner.png" alt="{{ __('navigation.user_alt') }}" />
+            @endif
         </span>
 
         <span class="mr-1 block font-medium text-theme-sm">{{ auth()->user()->name }}</span>

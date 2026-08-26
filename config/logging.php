@@ -83,6 +83,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'backups' => [
+            'driver' => 'daily',
+            'path' => $requestLogs['backups']['path'],
+            'level' => $requestLogs['backups']['level'],
+            'max_files' => $requestLogs['backups']['max_files'],
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

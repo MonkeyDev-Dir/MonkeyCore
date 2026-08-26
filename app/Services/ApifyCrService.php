@@ -98,6 +98,40 @@ class ApifyCrService
         return $data;
     }
 
+    /**
+     * Consulta los datos disponibles de una persona jurídica por su cédula jurídica.
+     *
+     * @return array<string, mixed>|null
+     *
+     * @throws ConnectionException
+     * @throws RequestException
+     */
+    public function consultarJuridica(string $cedula): ?array
+    {
+        if (! preg_match('/^\d{10}$/', $cedula)) {
+            throw new InvalidArgumentException('La cédula jurídica debe contener exactamente 10 dígitos.');
+        }
+
+        $response = $this->request()
+            ->get('/juridica', [
+                'cedula' => $cedula,
+            ]);
+
+        if ($response->notFound()) {
+            return null;
+        }
+
+        $response->throw();
+
+        $data = $response->json();
+
+        if (! is_array($data) || ! is_string($data['nombre'] ?? null) || trim($data['nombre']) === '') {
+            throw new UnexpectedValueException('ApifyCR devolvió una respuesta jurídica sin datos válidos.');
+        }
+
+        return $data;
+    }
+
     private function durationInMilliseconds(float $startedAt): int
     {
         return (int) round((microtime(true) - $startedAt) * 1000);

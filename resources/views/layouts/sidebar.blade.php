@@ -83,14 +83,14 @@
                                             class="menu-item group w-full"
                                             :class="[
                                                 isSubmenuOpen({{ $groupIndex }}, {{ $itemIndex }}) ?
-                                                'menu-item-active' : 'menu-item-inactive',
+                                                'bg-brand-50 text-brand-700 shadow-theme-xs ring-1 ring-inset ring-brand-200/70 dark:bg-brand-500/[0.12] dark:text-brand-300 dark:ring-brand-500/25' : 'menu-item-inactive',
                                                 !$store.sidebar.isExpanded && !$store.sidebar.isHovered ?
                                                 'xl:justify-center' : 'xl:justify-start'
                                             ]">
 
                                             <!-- Icon -->
                                             <span :class="isSubmenuOpen({{ $groupIndex }}, {{ $itemIndex }}) ?
-                                                    'menu-item-icon-active' : 'menu-item-icon-inactive'">
+                                                    'text-brand-600 dark:text-brand-300' : 'menu-item-icon-inactive'">
                                                 {!! \App\Helpers\MenuHelper::getIconSvg($item['icon']) !!}
                                             </span>
 
@@ -128,7 +128,7 @@
                                                     <li>
                                                         <a href="{{ $subItem['path'] }}" class="menu-dropdown-item"
                                                             :class="isActive('{{ $subItem['path'] }}') ?
-                                                                'menu-dropdown-item-active' :
+                                                                'bg-brand-50 text-brand-700 shadow-theme-xs ring-1 ring-inset ring-brand-200/70 dark:bg-brand-500/[0.12] dark:text-brand-300 dark:ring-brand-500/25' :
                                                                 'menu-dropdown-item-inactive'">
                                                             {{ $subItem['name'] }}
                                                             <span class="flex items-center gap-1 ml-auto">
@@ -158,7 +158,7 @@
                                         <!-- Simple Menu Item -->
                                         <a href="{{ $item['path'] }}" class="menu-item group"
                                             :class="[
-                                                isActive('{{ $item['path'] }}') ? 'menu-item-active' :
+                                                isActive('{{ $item['path'] }}') ? 'bg-brand-50 text-brand-700 shadow-theme-xs ring-1 ring-inset ring-brand-200/70 dark:bg-brand-500/[0.12] dark:text-brand-300 dark:ring-brand-500/25' :
                                                 'menu-item-inactive',
                                                 (!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ?
                                                 'xl:justify-center' :
@@ -167,7 +167,7 @@
 
                                             <!-- Icon -->
                                             <span
-                                                :class="isActive('{{ $item['path'] }}') ? 'menu-item-icon-active' :
+                                                :class="isActive('{{ $item['path'] }}') ? 'text-brand-600 dark:text-brand-300' :
                                                     'menu-item-icon-inactive'">
                                                 {!! \App\Helpers\MenuHelper::getIconSvg($item['icon']) !!}
                                             </span>

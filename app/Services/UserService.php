@@ -4,9 +4,12 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
+    public function __construct(private AvatarService $avatarService) {}
+
     /**
      * @return Collection<int, User>
      */
@@ -29,11 +32,50 @@ class UserService
     public function save(array $attributes, ?User $user = null): User
     {
         if ($user === null) {
-            return User::create($attributes);
+            return User::create([
+                ...$attributes,
+                'avatar_path' => $attributes['avatar_path'] ?? $this->avatarService->generateRobotAvatar(),
+            ]);
         }
 
         $user->update($attributes);
 
         return $user->refresh();
+    }
+
+    public function regenerateAvatar(User $user): User
+    {
+        $oldAvatarPath = $user->avatar_path;
+        $newAvatarPath = $this->avatarService->generateRobotAvatar();
+
+        $user->update([
+            'avatar_path' => $newAvatarPath,
+        ]);
+
+        if ($oldAvatarPath !== null) {
+            Storage::disk('public')->delete($oldAvatarPath);
+        }
+
+        return $user->refresh();
+    }
+
+    public function selectAvatar(User $user, string $avatarPath): User
+    {
+        $this->updateAvatar($user, $avatarPath);
+
+        return $user->refresh();
+    }
+
+    private function updateAvatar(User $user, string $avatarPath): void
+    {
+        $oldAvatarPath = $user->avatar_path;
+
+        $user->update([
+            'avatar_path' => $avatarPath,
+        ]);
+
+        if ($oldAvatarPath !== null && $oldAvatarPath !== $avatarPath) {
+            Storage::disk('public')->delete($oldAvatarPath);
+        }
     }
 }

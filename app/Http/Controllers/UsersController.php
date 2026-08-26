@@ -14,9 +14,7 @@ class UsersController extends Controller
 
     public function index(): View
     {
-        return view('pages.users', [
-            'users' => $this->userService->all(),
-        ]);
+        return view('pages.users');
     }
 
     public function edit(User $user): View

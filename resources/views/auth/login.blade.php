@@ -64,7 +64,7 @@
                                     <span class="bg-white p-2 text-gray-400 sm:px-5 sm:py-2 dark:bg-gray-900">{{ __('auth.login.or') }}</span>
                                 </div>
                             </div>
-                            <form method="POST" action="{{ route('login') }}">
+                            <form method="POST" action="{{ route('login') }}" x-data="{ isSubmitting: false }" x-on:submit="isSubmitting = true" :aria-busy="isSubmitting">
                                 @csrf
                                 <div class="space-y-5">
                                     <!-- Email -->
@@ -73,7 +73,8 @@
                                             {{ __('auth.login.email') }}<span class="text-error-500">*</span>
                                         </label>
                                         <input type="email" id="email" name="email" value="{{ old('email') }}" autocomplete="email" placeholder="info@gmail.com"
-                                            class="shadow-theme-xs focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-950 dark:text-white/90 dark:placeholder:text-white/30" />
+                                            :readonly="isSubmitting"
+                                            class="shadow-theme-xs focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden read-only:cursor-not-allowed read-only:bg-gray-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white/90 dark:placeholder:text-white/30 dark:read-only:bg-white/[0.03]" />
                                         @error('email')
                                             <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
                                         @enderror
@@ -86,7 +87,8 @@
                                         <div x-data="{ showPassword: false }" class="relative">
                                             <input :type="showPassword ? 'text' : 'password'" id="password" name="password" autocomplete="current-password"
                                                 placeholder="{{ __('auth.login.password_placeholder') }}"
-                                                class="shadow-theme-xs focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pr-11 pl-4 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-950 dark:text-white/90 dark:placeholder:text-white/30" />
+                                                :readonly="isSubmitting"
+                                                class="shadow-theme-xs focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pr-11 pl-4 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden read-only:cursor-not-allowed read-only:bg-gray-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white/90 dark:placeholder:text-white/30 dark:read-only:bg-white/[0.03]" />
                                             <span @click="showPassword = !showPassword"
                                                 class="absolute top-1/2 right-4 z-30 -translate-y-1/2 cursor-pointer text-gray-500 dark:text-gray-400">
                                                 <svg x-show="!showPassword" class="fill-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -132,17 +134,23 @@
                                     <!-- Button -->
                                     <div>
                                         <button type="submit"
-                                            class="bg-brand-500 shadow-theme-xs hover:bg-brand-600 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-white transition">
-                                            {{ __('auth.login.submit') }}
+                                            :disabled="isSubmitting"
+                                            class="bg-brand-500 shadow-theme-xs hover:bg-brand-600 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-75">
+                                            <span x-show="!isSubmitting">{{ __('auth.login.submit') }}</span>
+                                            <span x-show="isSubmitting" class="flex items-center gap-2">
+                                                <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden="true"></span>
+                                                {{ __('auth.login.loading') }}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
                             </form>
                             <div class="mt-5">
                                 <p class="text-center text-sm font-normal text-gray-700 sm:text-start dark:text-gray-400">
-                                    {{ __('auth.login.no_account') }}
-                                    @if (Route::has('register'))
-                                        <a href="{{ route('register') }}" class="text-brand-500 hover:text-brand-600 dark:text-brand-400">{{ __('auth.login.sign_up') }}</a>
+                                    @if (Route::has('password.request'))
+                                        <a href="{{ route('password.request') }}" class="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+                                            {{ __('auth.login.change_password') }}
+                                        </a>
                                     @endif
                                 </p>
                             </div>
@@ -153,12 +161,9 @@
 
             <div class="bg-brand-950 relative hidden h-full w-full items-center lg:grid lg:w-1/2 dark:bg-white/5">
                 <div class="z-1 flex items-center justify-center">
-                    <!-- ===== Common Grid Shape Start ===== -->
-                    <x-common.common-grid-shape/>
                     <div class="flex max-w-xs flex-col items-center">
                         <a href="/" class="mb-4 block">
-                            <img class="dark:hidden" src="/images/logo/monkey-web-bg-clear.webp" alt="{{ __('auth.login.logo_alt') }}" width="300" height="51" />
-                            <img class="hidden dark:block" src="/images/logo/monkey-web-bg-dark.webp" alt="{{ __('auth.login.logo_alt') }}" width="300" height="51" />
+                            <img src="/images/logo/monkey-web-bg-dark.webp" alt="{{ __('auth.login.logo_alt') }}" width="300" height="51" />
                         </a>
                         <p class="text-center text-gray-400 dark:text-white/60">
                             {{ __('auth.login.tagline') }}
@@ -167,7 +172,7 @@
                 </div>
             </div>
             <!-- Toggler -->
-            <div class="fixed right-6 bottom-6 z-50">
+            <div hidden class="fixed right-6 bottom-6 z-50">
                 <button
                     class="bg-brand-500 hover:bg-brand-600 inline-flex size-14 items-center justify-center rounded-full text-white transition-colors"
                     @click.prevent="$store.theme.toggle()">

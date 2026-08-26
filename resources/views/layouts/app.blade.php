@@ -11,7 +11,7 @@
     @livewireStyles
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/sass/app.scss', 'resources/js/app.js'])
 
     <!-- Alpine.js -->
     {{-- <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script> --}}
@@ -130,6 +130,12 @@
         </div>
 
     </div>
+
+    @if(session('toast'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => Toast.fire(@js(session('toast'))));
+        </script>
+    @endif
 
     @stack('scripts')
     @livewireScriptConfig

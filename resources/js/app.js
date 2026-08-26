@@ -4,6 +4,7 @@ import Swal from 'sweetalert2';
 import { Alpine, Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 
 import 'air-datepicker/air-datepicker.css';
+import 'sweetalert2/dist/sweetalert2.css';
 
 window.AirDatepicker = AirDatepicker;
 window.Swal = Swal;
@@ -13,6 +14,16 @@ window.Toast = Swal.mixin({
     showConfirmButton: false,
     timer: 3000,
     timerProgressBar: true,
+    customClass: {
+        popup: 'app-toast',
+        title: 'app-toast-title',
+        icon: 'app-toast-icon',
+        timerProgressBar: 'app-toast-progress',
+    },
+    didOpen(toast) {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+    },
 });
 
 function initializeDatepickers() {
@@ -39,6 +50,13 @@ Alpine.store('theme', {
     theme: 'light',
 
     init() {
+        if (document.documentElement.dataset.themeContext === 'light') {
+            this.theme = 'light';
+            this.updateTheme();
+
+            return;
+        }
+
         const savedTheme = localStorage.getItem('theme');
         const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 

@@ -18,3 +18,6 @@ Los campos de fecha deben usar `data-datepicker` para activar Air Datepicker. La
 
 ## Blades solo de presentación
 Las vistas Blade no deben contener código PHP ni lógica de aplicación. Reciben datos preparados por controllers/services y se limitan a presentar la información.
+
+## Reutilizar el cierre estándar de modales
+Todos los modales deben usar el componente Blade `<x-common.modal-close />` para el botón de cierre. Pase únicamente los atributos de interacción del modal, como `x-on:click` y `wire:click`; no duplique el SVG ni sus clases.

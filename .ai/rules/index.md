@@ -8,7 +8,9 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/css/** | .ai/rules/css.md |
 | public/images/** | .ai/rules/images.md |
 | resources/js/** | .ai/rules/js.md |
+| app/Livewire/** | .ai/rules/livewire.md |
 | database/migrations/** | .ai/rules/migrations.md |
+| resources/sass/** | .ai/rules/sass.md |
 | database/seeders/** | .ai/rules/seeders.md |
 | app/Services/** | .ai/rules/services.md |
 | resources/template/** | .ai/rules/template.md |
