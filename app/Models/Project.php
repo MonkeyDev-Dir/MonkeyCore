@@ -8,12 +8,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 #[Fillable(['client_id', 'name', 'code', 'description'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
+
+    public function descriptionPreview(): string
+    {
+        $description = trim(strip_tags((string) $this->description));
+
+        return Str::length($description) > 120
+            ? Str::substr($description, 0, 120).'...'
+            : $description;
+    }
+
+    public function hasLongDescription(): bool
+    {
+        return Str::length(trim(strip_tags((string) $this->description))) > 120;
+    }
 
     /** @return BelongsTo<Client, $this> */
     public function client(): BelongsTo

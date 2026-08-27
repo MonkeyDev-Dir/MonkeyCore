@@ -26,6 +26,14 @@ class ClientAnnualBackups extends Component
         return view('livewire.clients.client-annual-backups', [
             'groups' => $backupService->forClientAnnualHistory($client, $this->projectId),
             'clientCode' => $this->clientCode,
+            'headers' => [
+                ['index' => 'month', 'label' => __('Mes')],
+                ['index' => 'filename', 'label' => __('Archivo')],
+                ['index' => 'connection', 'label' => __('Conexión')],
+                ['index' => 'generated_at', 'label' => __('Fecha')],
+                ['index' => 'size', 'label' => __('Tamaño')],
+                ['index' => 'action', 'label' => ''],
+            ],
         ]);
     }
 }

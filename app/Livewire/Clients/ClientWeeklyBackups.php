@@ -26,6 +26,13 @@ class ClientWeeklyBackups extends Component
         return view('livewire.clients.client-weekly-backups', [
             'groups' => $backupService->forClientCurrentWeek($client, $this->projectId),
             'clientCode' => $this->clientCode,
+            'headers' => [
+                ['index' => 'filename', 'label' => __('Archivo')],
+                ['index' => 'connection', 'label' => __('Conexión')],
+                ['index' => 'generated_at', 'label' => __('Hora')],
+                ['index' => 'size', 'label' => __('Tamaño')],
+                ['index' => 'action', 'label' => ''],
+            ],
         ]);
     }
 }

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '../../vendor/tallstackui/tallstackui/css/v4.css';
 
 [x-cloak] {
   display: none !important;
@@ -6,6 +7,8 @@
 
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/tallstackui/tallstackui/**/*.php';
+@source '../../app/Providers/*.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';

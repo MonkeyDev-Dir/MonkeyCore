@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\RandomHelper;
 use App\Models\Client;
 use App\Models\FileType;
+use App\Models\Project;
 use App\Models\StoredFile;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -37,6 +38,21 @@ class ClientService
     public function findByCodeOrFail(string $clientCode): Client
     {
         return Client::query()->with(['contacts', 'addresses', 'projects'])->where('code', $clientCode)->firstOrFail();
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function saveProject(Client $client, array $attributes, ?Project $project = null): Project
+    {
+        $project ??= new Project(['client_id' => $client->id]);
+
+        if (! $project->exists && $project->code === null) {
+            $project->code = RandomHelper::generateUniqueAlphanumeric(7, 'projects', 'PROJ');
+        }
+
+        $project->fill($attributes);
+        $project->save();
+
+        return $project->refresh();
     }
 
     public function updateLogo(Client $client, UploadedFile $image): Client

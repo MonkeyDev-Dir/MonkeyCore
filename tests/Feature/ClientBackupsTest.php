@@ -88,7 +88,7 @@ it('keeps the latest backup of each week in the monthly history', function () {
 
     Livewire::test(ClientMonthlyBackups::class, ['clientCode' => $client->code])
         ->assertSee('latest-week.backup')
-        ->assertSee('<details', false)
+        ->assertSee('tallstackui_accordion', false)
         ->assertDontSee('older-week.backup');
 });
 

@@ -14,6 +14,14 @@ class ClientsTable extends Component
 
     public function render(ClientService $clientService): View
     {
-        return view('livewire.clients.clients-table', ['clients' => $clientService->all()]);
+        return view('livewire.clients.clients-table', [
+            'clients' => $clientService->all(),
+            'headers' => [
+                ['index' => 'name', 'label' => __('Cliente')],
+                ['index' => 'type', 'label' => __('Tipo')],
+                ['index' => 'contact', 'label' => __('Contacto principal')],
+                ['index' => 'email', 'label' => __('Correo electrónico')],
+            ],
+        ]);
     }
 }

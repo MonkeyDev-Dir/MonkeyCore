@@ -16,6 +16,11 @@ class UsersTable extends Component
     {
         return view('livewire.users.users-table', [
             'users' => $userService->all(),
+            'headers' => [
+                ['index' => 'name', 'label' => __('Nombre')],
+                ['index' => 'ide', 'label' => __('Identificación')],
+                ['index' => 'email', 'label' => __('Correo electrónico')],
+            ],
         ]);
     }
 }

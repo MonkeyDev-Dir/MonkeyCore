@@ -78,8 +78,11 @@
                 <div x-data="{ activeTab: 'backups' }" class="p-5 lg:p-6">
                     <div class="border-b border-gray-200 dark:border-gray-800">
                         <nav class="flex gap-6 overflow-x-auto" role="tablist" aria-label="{{ __('Secciones del perfil') }}">
-                            <button type="button" role="tab" aria-selected="true" x-on:click="activeTab = 'backups'" x-bind:class="activeTab === 'backups' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-colors">
+                            <button type="button" role="tab" x-bind:aria-selected="activeTab === 'backups'" x-on:click="activeTab = 'backups'" x-bind:class="activeTab === 'backups' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-colors">
                                 {{ __('Respaldos') }}
+                            </button>
+                            <button type="button" role="tab" x-bind:aria-selected="activeTab === 'projects'" x-on:click="activeTab = 'projects'" x-bind:class="activeTab === 'projects' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-colors">
+                                {{ __('Proyectos') }}
                             </button>
                         </nav>
                     </div>
@@ -94,10 +97,15 @@
                             </div>
                         </div>
                     </div>
+
+                    <div x-cloak x-show="activeTab === 'projects'" role="tabpanel" class="pt-6">
+                        <livewire:clients.client-projects :client-code="$client->code" />
+                    </div>
                 </div>
             </section>
         </div>
     </div>
 
     <livewire:clients.client-logo-modal />
+    <livewire:clients.project-modal />
 @endsection

@@ -21,3 +21,6 @@ Las vistas Blade no deben contener código PHP ni lógica de aplicación. Recibe
 
 ## Reutilizar el cierre estándar de modales
 Todos los modales deben usar el componente Blade `<x-common.modal-close />` para el botón de cierre. Pase únicamente los atributos de interacción del modal, como `x-on:click` y `wire:click`; no duplique el SVG ni sus clases.
+
+## Usar TallStackUI con el tema visual del proyecto
+Usa componentes de TallStackUI para nuevas interfaces o al actualizar componentes existentes. Conserva el esquema visual del template implementado y define explícitamente variantes compatibles con los modos claro y oscuro en cada componente.

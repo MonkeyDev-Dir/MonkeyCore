@@ -8,6 +8,7 @@
 
     <title>{{ $title ?? 'Dashboard' }} | TailAdmin - Laravel Tailwind CSS Admin Dashboard Template</title>
 
+    <tallstackui:script />
     @livewireStyles
 
     <!-- Scripts -->

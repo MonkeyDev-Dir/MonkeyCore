@@ -2,12 +2,15 @@
 
 use App\Livewire\Clients\ClientLogoModal;
 use App\Livewire\Clients\ClientModal;
+use App\Livewire\Clients\ProjectModal;
 use App\Models\Client;
 use App\Models\FileType;
+use App\Models\Project;
 use App\Models\StoredFile;
 use App\Models\User;
 use App\Services\ClientService;
 use Database\Seeders\FileTypeSeeder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
@@ -27,6 +30,26 @@ it('shows the clients page to authenticated users', function () {
 
 it('redirects guests from the clients page', function () {
     $this->get(route('clients.index'))->assertRedirectToRoute('login');
+});
+
+it('saves sanitized rich text in a project description', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(ProjectModal::class)
+        ->call('openCreate', $client->code)
+        ->set('name', 'Proyecto enriquecido')
+        ->set('description', '<p><strong>Descripción importante</strong></p><script>alert(1)</script>')
+        ->call('save')
+        ->assertSet('isOpen', false)
+        ->assertDispatched('project-saved');
+
+    $project = Project::query()->where('name', 'Proyecto enriquecido')->firstOrFail();
+
+    expect($project->code)->toMatch('/^PROJ-[A-Z0-9]{7}$/')
+        ->and($project->description)->toBe('<p><strong>Descripción importante</strong></p>alert(1)')
+        ->and($project->description)->not->toContain('<script>');
 });
 
 it('creates a company with its primary contact, address, and image', function () {
@@ -217,6 +240,7 @@ it('fills a company client from the Costa Rica legal entity registry', function 
 it('opens the client profile from the clients table', function () {
     $user = User::factory()->create();
     $client = Client::factory()->create(['name' => 'Cliente del perfil']);
+    Project::factory()->create(['client_id' => $client->id, 'name' => 'Proyecto visible']);
 
     $this->actingAs($user)
         ->get(route('clients.index'))
@@ -235,6 +259,7 @@ it('opens the client profile from the clients table', function () {
         ->assertSee(route('clients.backups', ['clientCode' => $client->code]), false)
         ->assertDontSee('client-monthly-backups')
         ->assertSee(__('Correo electrónico'))
+        ->assertSee('Proyecto visible')
         ->assertDontSee(__('Código: :code', ['code' => $client->code]));
 });
 
@@ -267,4 +292,79 @@ it('validates the client name and image type', function () {
         ->set('image', UploadedFile::fake()->create('document.pdf', 100, 'application/pdf'))
         ->call('save')
         ->assertHasErrors(['name', 'image']);
+});
+
+it('lists client projects and creates one through the profile modal', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('clients.show', ['clientCode' => $client->code]))
+        ->assertSee(__('Proyectos'))
+        ->assertSee(__('Nuevo proyecto'));
+
+    Livewire::actingAs($user)
+        ->test(ProjectModal::class)
+        ->call('openCreate', $client->code)
+        ->set('name', 'Portal del cliente')
+        ->set('description', 'Proyecto de integración')
+        ->call('save')
+        ->assertSet('isOpen', false)
+        ->assertDispatched('project-saved');
+
+    $project = Project::query()->where('name', 'Portal del cliente')->firstOrFail();
+
+    expect($project->client_id)->toBe($client->id)
+        ->and($project->code)->toStartWith('PROJ-')
+        ->and($project->description)->toBe('Proyecto de integración');
+});
+
+it('edits a project from its client profile', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->create();
+    $project = Project::factory()->create(['client_id' => $client->id, 'name' => 'Proyecto original']);
+
+    Livewire::actingAs($user)
+        ->test(ProjectModal::class)
+        ->call('openEdit', $client->code, $project->id)
+        ->assertSet('name', 'Proyecto original')
+        ->set('name', 'Proyecto actualizado')
+        ->call('save')
+        ->assertSet('isOpen', false)
+        ->assertDispatched('project-saved');
+
+    expect($project->refresh()->name)->toBe('Proyecto actualizado');
+});
+
+it('does not allow editing a project from another client', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->create();
+    $otherClient = Client::factory()->create();
+    $project = Project::factory()->create(['client_id' => $otherClient->id]);
+
+    expect(fn () => Livewire::actingAs($user)
+        ->test(ProjectModal::class)
+        ->call('openEdit', $client->code, $project->id))
+        ->toThrow(ModelNotFoundException::class);
+});
+
+it('validates a project name as required', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(ProjectModal::class)
+        ->call('openCreate', $client->code)
+        ->call('save')
+        ->assertHasErrors(['name']);
+});
+
+it('limits project card details to 120 characters before expanding', function () {
+    $project = Project::factory()->make([
+        'description' => str_repeat('Detalle del proyecto. ', 10),
+    ]);
+
+    expect($project->hasLongDescription())->toBeTrue()
+        ->and($project->descriptionPreview())->toEndWith('...')
+        ->and(mb_strlen($project->descriptionPreview()))->toBe(123);
 });
