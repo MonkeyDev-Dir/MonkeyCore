@@ -16,10 +16,7 @@
                         {{ str($client->name)->substr(0, 1)->upper() }}
                     </span>
                     <span class="pointer-events-none absolute inset-0 flex items-center justify-center bg-gray-950/60 text-white opacity-0 transition-opacity duration-200 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                            <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h2l1.25-1.5h6.5L16.5 6h2A1.5 1.5 0 0 1 20 7.5v9A1.5 1.5 0 0 1 18.5 18h-13A1.5 1.5 0 0 1 4 16.5v-9Z" stroke-linejoin="round" />
-                            <circle cx="12" cy="12" r="3.25" />
-                        </svg>
+                        <i data-lucide="camera" class="h-5 w-5" aria-hidden="true"></i>
                     </span>
                 </button>
 
@@ -34,53 +31,70 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <section class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
+        <div class="grid items-start grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+            <section class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 xl:sticky xl:top-20">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Información general') }}</h2>
-                <dl class="mt-5 grid gap-4 sm:grid-cols-2">
-                    <div>
-                        <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Identificación fiscal') }}</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $client->tax_id ?? __('Sin información') }}</dd>
+                <dl class="mt-5 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300" aria-hidden="true">
+                            <i data-lucide="contact" class="h-5 w-5" aria-hidden="true"></i>
+                        </span>
+                        <div class="min-w-0 text-sm">
+                            <dt class="text-gray-500 dark:text-gray-400">{{ __('Identificación fiscal') }}</dt>
+                            <dd class="mt-1 truncate font-medium text-gray-800 dark:text-white/90">{{ $client->tax_id ?? __('Sin información') }}</dd>
+                        </div>
                     </div>
-                    <div>
-                        <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Correo electrónico') }}</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $client->email ?? __('Sin información') }}</dd>
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300" aria-hidden="true">
+                            <i data-lucide="mail" class="h-5 w-5" aria-hidden="true"></i>
+                        </span>
+                        <div class="min-w-0 text-sm">
+                            <dt class="text-gray-500 dark:text-gray-400">{{ __('Correo electrónico') }}</dt>
+                            <dd class="mt-1 truncate font-medium text-gray-800 dark:text-white/90">{{ $client->email ?? __('Sin información') }}</dd>
+                        </div>
                     </div>
-                    <div>
-                        <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Teléfono') }}</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $client->phone ?? __('Sin información') }}</dd>
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300" aria-hidden="true">
+                            <i data-lucide="phone" class="h-5 w-5" aria-hidden="true"></i>
+                        </span>
+                        <div class="min-w-0 text-sm">
+                            <dt class="text-gray-500 dark:text-gray-400">{{ __('Teléfono') }}</dt>
+                            <dd class="mt-1 truncate font-medium text-gray-800 dark:text-white/90">{{ $client->phone ?? __('Sin información') }}</dd>
+                        </div>
                     </div>
-                    <div>
-                        <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sitio web') }}</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $client->website ?? __('Sin información') }}</dd>
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300" aria-hidden="true">
+                            <i data-lucide="link" class="h-5 w-5" aria-hidden="true"></i>
+                        </span>
+                        <div class="min-w-0 text-sm">
+                            <dt class="text-gray-500 dark:text-gray-400">{{ __('Sitio web') }}</dt>
+                            <dd class="mt-1 truncate font-medium text-gray-800 dark:text-white/90">{{ $client->website ?? __('Sin información') }}</dd>
+                        </div>
                     </div>
                 </dl>
             </section>
 
-            <section class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Contacto principal') }}</h2>
-                @if($primaryContact)
-                    <dl class="mt-5 grid gap-4 sm:grid-cols-2">
+            <section class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]" aria-label="{{ __('Contenido del perfil del cliente') }}">
+                <div x-data="{ activeTab: 'backups' }" class="p-5 lg:p-6">
+                    <div class="border-b border-gray-200 dark:border-gray-800">
+                        <nav class="flex gap-6 overflow-x-auto" role="tablist" aria-label="{{ __('Secciones del perfil') }}">
+                            <button type="button" role="tab" aria-selected="true" x-on:click="activeTab = 'backups'" x-bind:class="activeTab === 'backups' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-colors">
+                                {{ __('Respaldos') }}
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div x-cloak x-show="activeTab === 'backups'" role="tabpanel" class="pt-6">
                         <div>
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Nombre') }}</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $primaryContact->name }}</dd>
+                            <livewire:clients.client-backups :client-code="$client->code" :show-history="false" />
+                            <div class="mt-4 text-right">
+                                <a href="{{ route('clients.backups', ['clientCode' => $client->code]) }}" class="text-sm font-medium text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300">
+                                    {{ __('Ver todos los respaldos registrados') }}
+                                </a>
+                            </div>
                         </div>
-                        <div>
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Cargo') }}</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $primaryContact->position ?? __('Sin información') }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Correo electrónico') }}</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $primaryContact->email ?? __('Sin información') }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">{{ __('Teléfono') }}</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $primaryContact->phone ?? __('Sin información') }}</dd>
-                        </div>
-                    </dl>
-                @else
-                    <p class="mt-5 text-sm text-gray-500 dark:text-gray-400">{{ __('Sin contacto registrado.') }}</p>
-                @endif
+                    </div>
+                </div>
             </section>
         </div>
     </div>

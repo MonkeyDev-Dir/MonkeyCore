@@ -3,8 +3,11 @@
 namespace App\Services;
 
 use App\Models\BackupConnection;
+use App\Models\Client;
 use App\Models\DatabaseBackup;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -226,16 +229,92 @@ class DatabaseBackupService
         return Storage::disk($this->disk())->readStream($path);
     }
 
+    /** @return Collection<int, array{date: CarbonImmutable, backups: Collection<int, DatabaseBackup>}> */
+    public function forClientCurrentWeek(Client $client, ?int $projectId = null): Collection
+    {
+        $now = $this->now();
+        $backups = $this->completedBackupsForClient($client, $projectId)
+            ->whereBetween('generated_at', [$now->startOfWeek(), $now->endOfWeek()])
+            ->orderByDesc('generated_at')
+            ->get();
+
+        return $backups
+            ->groupBy(fn (DatabaseBackup $backup): string => $this->localDate($backup)->format('Y-m-d'))
+            ->map(fn (Collection $dayBackups): Collection => $dayBackups->take(5)->values())
+            ->map(fn (Collection $dayBackups, string $date): array => [
+                'date' => CarbonImmutable::createFromFormat('Y-m-d', $date, $this->timezone()),
+                'backups' => $dayBackups,
+            ])
+            ->values();
+    }
+
+    /** @return Collection<int, array{month: CarbonImmutable, backups: Collection<int, DatabaseBackup>}> */
+    public function forClientMonthlyHistory(Client $client, ?int $projectId = null): Collection
+    {
+        $now = $this->now();
+        $backups = $this->completedBackupsForClient($client, $projectId)
+            ->whereBetween('generated_at', [$now->subMonths(11)->startOfMonth(), $now->endOfMonth()])
+            ->orderByDesc('generated_at')
+            ->get()
+            ->reject(fn (DatabaseBackup $backup): bool => $this->localDate($backup)->greaterThanOrEqualTo($now->startOfWeek()))
+            ->groupBy(fn (DatabaseBackup $backup): string => "{$this->localDate($backup)->format('o-W')}:{$backup->backup_connection_id}")
+            ->map(fn (Collection $weekBackups): DatabaseBackup => $weekBackups->first());
+
+        return $backups
+            ->groupBy(fn (DatabaseBackup $backup): string => $this->localDate($backup)->format('Y-m'))
+            ->map(fn (Collection $monthBackups, string $month): array => [
+                'month' => CarbonImmutable::createFromFormat('Y-m-d', "{$month}-01", $this->timezone()),
+                'backups' => $monthBackups->sortByDesc('generated_at')->values(),
+            ])
+            ->sortByDesc('month')
+            ->values();
+    }
+
+    /** @return Collection<int, array{year: CarbonImmutable, backups: Collection<int, DatabaseBackup>}> */
+    public function forClientAnnualHistory(Client $client, ?int $projectId = null): Collection
+    {
+        $now = $this->now();
+        $monthlyStart = $now->subMonths(11)->startOfMonth();
+        $backups = $this->completedBackupsForClient($client, $projectId)
+            ->whereBetween('generated_at', [$now->subYears((int) config('backups.retention.years', 5))->startOfMonth(), $monthlyStart->subSecond()])
+            ->orderByDesc('generated_at')
+            ->get()
+            ->groupBy(fn (DatabaseBackup $backup): string => "{$this->localDate($backup)->format('Y-m')}:{$backup->backup_connection_id}")
+            ->map(fn (Collection $monthBackups): DatabaseBackup => $monthBackups->first());
+
+        return $backups
+            ->groupBy(fn (DatabaseBackup $backup): string => $this->localDate($backup)->format('Y'))
+            ->map(fn (Collection $yearBackups, string $year): array => [
+                'year' => CarbonImmutable::createFromFormat('Y-m-d', "{$year}-01-01", $this->timezone()),
+                'backups' => $yearBackups->sortByDesc('generated_at')->values(),
+            ])
+            ->sortByDesc('year')
+            ->values();
+    }
+
+    public function readStreamForClient(Client $client, DatabaseBackup $backup): mixed
+    {
+        abort_unless($backup->client_id === $client->id && $backup->status === 'completed', 404);
+
+        return $this->readStream($backup->path);
+    }
+
     public function prune(): void
     {
         $startedAt = microtime(true);
         $disk = Storage::disk($this->disk());
-        $now = CarbonImmutable::now(config('backups.timezone'));
+        $now = $this->now();
         $weekStart = $now->startOfWeek();
-        $cutoff = $now->subMonths((int) config('backups.retention.months', 12));
+        $monthlyCutoff = $now->subMonths((int) config('backups.retention.months', 12));
+        $annualCutoff = $now->subYears((int) config('backups.retention.years', 5));
         $latestByWeek = [];
+        $latestByMonth = [];
         $deleted = 0;
-        $files = $this->all();
+        $files = DatabaseBackup::query()
+            ->where('status', 'completed')
+            ->whereNotNull('generated_at')
+            ->orderByDesc('generated_at')
+            ->get();
 
         Log::channel('backups')->debug('Limpieza de respaldos iniciada', [
             'files_found' => count($files),
@@ -243,24 +322,36 @@ class DatabaseBackupService
         ]);
 
         foreach ($files as $file) {
-            $timestamp = $file['last_modified'];
+            $timestamp = $file->generated_at->setTimezone($this->timezone());
 
             if ($timestamp->greaterThanOrEqualTo($weekStart)) {
                 continue;
             }
 
-            if ($timestamp->greaterThanOrEqualTo($cutoff)) {
-                $week = $timestamp->format('o-W');
+            $retentionKey = "{$file->client_id}:{$file->backup_connection_id}";
+
+            if ($timestamp->greaterThanOrEqualTo($monthlyCutoff)) {
+                $week = "{$retentionKey}:{$timestamp->format('o-W')}";
 
                 if (! isset($latestByWeek[$week])) {
-                    $latestByWeek[$week] = $file['path'];
+                    $latestByWeek[$week] = $file->id;
 
                     continue;
                 }
             }
 
-            $disk->delete($file['path']);
-            DatabaseBackup::query()->where('path', $file['path'])->delete();
+            if ($timestamp->greaterThanOrEqualTo($annualCutoff)) {
+                $month = "{$retentionKey}:{$timestamp->format('Y-m')}";
+
+                if (! isset($latestByMonth[$month])) {
+                    $latestByMonth[$month] = $file->id;
+
+                    continue;
+                }
+            }
+
+            $disk->delete($file->path);
+            $file->delete();
             $deleted++;
         }
 
@@ -390,6 +481,31 @@ class DatabaseBackupService
     private function disk(): string
     {
         return (string) config('backups.disk', 's3');
+    }
+
+    private function now(): CarbonImmutable
+    {
+        return CarbonImmutable::now($this->timezone());
+    }
+
+    private function timezone(): string
+    {
+        return (string) config('backups.timezone');
+    }
+
+    private function localDate(DatabaseBackup $backup): CarbonImmutable
+    {
+        return $backup->generated_at->setTimezone($this->timezone());
+    }
+
+    private function completedBackupsForClient(Client $client, ?int $projectId = null): Builder
+    {
+        return DatabaseBackup::query()
+            ->with(['backupConnection', 'project'])
+            ->where('client_id', $client->id)
+            ->where('status', 'completed')
+            ->whereNotNull('generated_at')
+            ->when($projectId !== null, fn (Builder $query): Builder => $query->where('project_id', $projectId));
     }
 
     private function assertBackupPath(string $path): void

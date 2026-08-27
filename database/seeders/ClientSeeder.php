@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Helpers\RandomHelper;
 use App\Models\Client;
 use Illuminate\Database\Seeder;
 
@@ -10,11 +9,16 @@ class ClientSeeder extends Seeder
 {
     public function run(): void
     {
-        Client::factory()
-            ->count(10)
-            ->state(fn (): array => [
-                'code' => RandomHelper::generateUniqueDigits(6, 'clients'),
-            ])
-            ->create();
+        $client = Client::query()->firstOrNew(['code' => '512122']);
+
+        if (! $client->exists) {
+            $client->fill([
+                'type' => 'company',
+                'name' => 'Cliente de prueba',
+                'status' => 'active',
+            ]);
+            $client->code = '512122';
+            $client->save();
+        }
     }
 }

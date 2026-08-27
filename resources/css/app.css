@@ -205,7 +205,7 @@
 }
 
 @utility menu-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
+  @apply text-gray-700 transition-colors duration-300 ease-in-out group-hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-300;
 }
 
 @utility menu-item-icon {
@@ -241,7 +241,7 @@
 }
 
 @utility menu-dropdown-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5;
+  @apply text-gray-700 transition-colors duration-300 ease-in-out dark:text-gray-300;
 }
 
 @utility menu-dropdown-item {
@@ -253,7 +253,95 @@
 }
 
 @utility menu-dropdown-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5;
+  @apply text-gray-700 transition-colors duration-300 ease-in-out dark:text-gray-300;
+}
+
+@utility sidebar-menu-active {
+  @apply relative isolate overflow-hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: url('/images/layout/brush-a.webp');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    opacity: 0.6;
+  }
+
+  &:is(.dark *)::before {
+    filter: invert(1);
+  }
+}
+
+@utility sidebar-menu-hover {
+  @apply relative isolate overflow-hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: url('/images/layout/brush-a.webp');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 300ms ease-in-out;
+  }
+
+  &:hover::before {
+    opacity: 0.6;
+  }
+
+  &:is(.dark *)::before {
+    filter: invert(1);
+  }
+}
+
+@utility sidebar-submenu-active {
+  @apply relative isolate overflow-hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: url('/images/layout/brush-b.webp');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    opacity: 0.4;
+    transform: scaleX(-1);
+  }
+
+  &:is(.dark *)::before {
+    filter: invert(1);
+  }
+}
+
+@utility sidebar-submenu-hover {
+  @apply relative isolate overflow-hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: url('/images/layout/brush-b.webp');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transform: scaleX(-1);
+    transition: opacity 300ms ease-in-out;
+  }
+
+  &:hover::before {
+    opacity: 0.4;
+  }
+
+  &:is(.dark *)::before {
+    filter: invert(1);
+  }
 }
 
 @utility menu-dropdown-badge {

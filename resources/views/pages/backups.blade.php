@@ -21,7 +21,12 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
                         @forelse($backups as $backup)
                             <tr class="text-gray-700 dark:text-gray-300">
-                                <td class="whitespace-nowrap px-6 py-4 font-medium">{{ $backup['name'] }}</td>
+                                <td class="whitespace-nowrap px-6 py-4 font-medium">
+                                    <span class="flex items-center gap-2">
+                                        <i data-lucide="database" class="h-4 w-4 shrink-0 text-orange-500" aria-hidden="true"></i>
+                                        {{ $backup['name'] }}
+                                    </span>
+                                </td>
                                 <td class="whitespace-nowrap px-6 py-4">{{ $backup['last_modified']->format('d/m/Y H:i:s') }}</td>
                                 <td class="whitespace-nowrap px-6 py-4">{{ number_format($backup['size'] / 1024 / 1024, 2) }} MB</td>
                                 <td class="px-6 py-4 text-right">

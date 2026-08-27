@@ -39,7 +39,11 @@
             return this.openSubmenus[key] || false;
         },
         isActive(path) {
-            return window.location.pathname === path || '{{ $currentPath }}' === path.replace(/^\//, '');
+            const normalizedPath = path.replace(/^\/+|\/+$/g, '');
+            const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+
+            return currentPath === normalizedPath ||
+                (normalizedPath !== '' && currentPath.startsWith(`${normalizedPath}/`));
         }
     }"
     :class="{
@@ -83,7 +87,7 @@
                                             class="menu-item group w-full"
                                             :class="[
                                                 isSubmenuOpen({{ $groupIndex }}, {{ $itemIndex }}) ?
-                                                'bg-brand-50 text-brand-700 shadow-theme-xs ring-1 ring-inset ring-brand-200/70 dark:bg-brand-500/[0.12] dark:text-brand-300 dark:ring-brand-500/25' : 'menu-item-inactive',
+                                                'sidebar-menu-active text-brand-700 dark:text-brand-300' : 'menu-item-inactive sidebar-menu-hover',
                                                 !$store.sidebar.isExpanded && !$store.sidebar.isHovered ?
                                                 'xl:justify-center' : 'xl:justify-start'
                                             ]">
@@ -128,8 +132,8 @@
                                                     <li>
                                                         <a href="{{ $subItem['path'] }}" class="menu-dropdown-item"
                                                             :class="isActive('{{ $subItem['path'] }}') ?
-                                                                'bg-brand-50 text-brand-700 shadow-theme-xs ring-1 ring-inset ring-brand-200/70 dark:bg-brand-500/[0.12] dark:text-brand-300 dark:ring-brand-500/25' :
-                                                                'menu-dropdown-item-inactive'">
+                                                                'sidebar-submenu-active text-brand-700 dark:text-brand-300' :
+                                                                'menu-dropdown-item-inactive sidebar-submenu-hover'">
                                                             {{ $subItem['name'] }}
                                                             <span class="flex items-center gap-1 ml-auto">
                                                                 @if (!empty($subItem['new']))
@@ -158,8 +162,8 @@
                                         <!-- Simple Menu Item -->
                                         <a href="{{ $item['path'] }}" class="menu-item group"
                                             :class="[
-                                                isActive('{{ $item['path'] }}') ? 'bg-brand-50 text-brand-700 shadow-theme-xs ring-1 ring-inset ring-brand-200/70 dark:bg-brand-500/[0.12] dark:text-brand-300 dark:ring-brand-500/25' :
-                                                'menu-item-inactive',
+                                                isActive('{{ $item['path'] }}') ? 'sidebar-menu-active text-brand-700 dark:text-brand-300' :
+                                                'menu-item-inactive sidebar-menu-hover',
                                                 (!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ?
                                                 'xl:justify-center' :
                                                 'justify-start'

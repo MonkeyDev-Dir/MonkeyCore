@@ -36,7 +36,7 @@ class ClientService
 
     public function findByCodeOrFail(string $clientCode): Client
     {
-        return Client::query()->with(['contacts', 'addresses'])->where('code', $clientCode)->firstOrFail();
+        return Client::query()->with(['contacts', 'addresses', 'projects'])->where('code', $clientCode)->firstOrFail();
     }
 
     public function updateLogo(Client $client, UploadedFile $image): Client

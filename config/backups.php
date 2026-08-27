@@ -6,6 +6,7 @@ return [
     'pg_dump_binary' => env('BACKUPS_PG_DUMP_BINARY', 'pg_dump'),
     'retention' => [
         'months' => (int) env('BACKUPS_RETENTION_MONTHS', 12),
+        'years' => (int) env('BACKUPS_RETENTION_YEARS', 5),
     ],
     'timezone' => env('BACKUPS_TIMEZONE', 'America/Guatemala'),
 ];

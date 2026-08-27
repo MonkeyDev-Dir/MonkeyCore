@@ -228,6 +228,13 @@ it('opens the client profile from the clients table', function () {
         ->assertOk()
         ->assertViewIs('pages.client-profile')
         ->assertSee('Cliente del perfil')
+        ->assertSee('lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]', false)
+        ->assertSee('space-y-4', false)
+        ->assertSee('dark:bg-gray-800', false)
+        ->assertSee('currentPath.startsWith(`${normalizedPath}/`)', false)
+        ->assertSee(route('clients.backups', ['clientCode' => $client->code]), false)
+        ->assertDontSee('client-monthly-backups')
+        ->assertSee(__('Correo electrónico'))
         ->assertDontSee(__('Código: :code', ['code' => $client->code]));
 });
 

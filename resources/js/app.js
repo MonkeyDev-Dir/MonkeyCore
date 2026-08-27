@@ -1,5 +1,6 @@
 import AirDatepicker from 'air-datepicker';
 import localeEs from 'air-datepicker/locale/es';
+import { createIcons, icons } from 'lucide';
 import Swal from 'sweetalert2';
 import { Alpine, Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 
@@ -26,6 +27,15 @@ window.Toast = Swal.mixin({
     },
 });
 
+function initializeIcons() {
+    createIcons({
+        icons,
+        attrs: {
+            'stroke-width': 1.5,
+        },
+    });
+}
+
 function initializeDatepickers() {
     document.querySelectorAll('[data-datepicker]').forEach((element) => {
         if (element._airDatepicker) {
@@ -41,7 +51,9 @@ function initializeDatepickers() {
 }
 
 initializeDatepickers();
+initializeIcons();
 document.addEventListener('livewire:navigated', initializeDatepickers);
+document.addEventListener('livewire:navigated', initializeIcons);
 
 window.Alpine = Alpine;
 window.Livewire = Livewire;

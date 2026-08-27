@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             FileTypeSeeder::class,
             ClientSeeder::class,
             EtaIBackupConfigurationSeeder::class,
+            ClientBackupsSeeder::class,
             UserSeeder::class,
         ]);
     }
