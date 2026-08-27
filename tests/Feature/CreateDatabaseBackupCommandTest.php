@@ -9,7 +9,7 @@ it('logs the complete backup process when there are no active connections', func
     Storage::fake('s3');
 
     $this->artisan('backups:create')
-        ->expectsOutput('Generando respaldos remotos de PostgreSQL...')
+        ->expectsOutput('Encolando respaldos remotos de bases de datos...')
         ->expectsOutput('Respaldos completados: 0')
         ->expectsOutput('Respaldos fallidos: 0')
         ->assertSuccessful();

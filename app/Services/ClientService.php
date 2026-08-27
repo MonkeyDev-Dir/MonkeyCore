@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Helpers\RandomHelper;
+use App\Models\BackupConnection;
 use App\Models\Client;
 use App\Models\FileType;
 use App\Models\Project;
 use App\Models\StoredFile;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +32,41 @@ class ClientService
             ->get();
     }
 
+    public function paginate(string $search = '', int $perPage = 10): LengthAwarePaginator
+    {
+        return Client::query()
+            ->with(['contacts' => fn ($query) => $query->where('is_primary', true), 'addresses' => fn ($query) => $query->where('is_primary', true)])
+            ->when(trim($search) !== '', function ($query) use ($search): void {
+                $term = '%'.Str::lower(Str::ascii(trim($search))).'%';
+
+                $query->where(function ($query) use ($term): void {
+                    foreach (['name', 'code', 'email'] as $column) {
+                        $method = $column === 'name' ? 'whereRaw' : 'orWhereRaw';
+                        $query->{$method}($this->accentInsensitiveColumn($column).' LIKE ?', [$term]);
+                    }
+                });
+            })
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    private function accentInsensitiveColumn(string $column): string
+    {
+        $qualifiedColumn = (new Client)->qualifyColumn($column);
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            return "unaccent(lower({$qualifiedColumn}))";
+        }
+
+        $expression = $qualifiedColumn;
+
+        foreach (['Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u', 'Ñ' => 'n', 'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n'] as $accented => $plain) {
+            $expression = "REPLACE({$expression}, '{$accented}', '{$plain}')";
+        }
+
+        return 'LOWER('.$expression.')';
+    }
+
     public function findOrFail(int $clientId): Client
     {
         return Client::query()->with(['contacts', 'addresses'])->findOrFail($clientId);
@@ -37,7 +74,7 @@ class ClientService
 
     public function findByCodeOrFail(string $clientCode): Client
     {
-        return Client::query()->with(['contacts', 'addresses', 'projects'])->where('code', $clientCode)->firstOrFail();
+        return Client::query()->with(['contacts', 'addresses', 'projects', 'backupConnections.project'])->where('code', $clientCode)->firstOrFail();
     }
 
     /** @param array<string, mixed> $attributes */
@@ -53,6 +90,23 @@ class ClientService
         $project->save();
 
         return $project->refresh();
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function saveBackupConnection(Client $client, array $attributes, ?BackupConnection $connection = null): BackupConnection
+    {
+        if ($connection !== null) {
+            $connection->update($attributes);
+
+            return $connection->refresh();
+        }
+
+        return $client->backupConnections()->create($attributes);
+    }
+
+    public function findBackupConnectionOrFail(Client $client, int $connectionId): BackupConnection
+    {
+        return $client->backupConnections()->findOrFail($connectionId);
     }
 
     public function updateLogo(Client $client, UploadedFile $image): Client

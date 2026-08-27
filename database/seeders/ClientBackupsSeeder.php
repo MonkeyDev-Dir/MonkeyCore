@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\DatabaseBackup;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ClientBackupsSeeder extends Seeder
 {
@@ -18,6 +19,7 @@ class ClientBackupsSeeder extends Seeder
             ['client_id' => $client->id, 'name' => 'Conexión de prueba'],
             [
                 'project_id' => null,
+                'database_type' => 'postgresql',
                 'ssh_host' => '127.0.0.1',
                 'ssh_port' => 22,
                 'ssh_user' => 'demo',
@@ -65,6 +67,7 @@ class ClientBackupsSeeder extends Seeder
             'client_id' => $connection->client_id,
             'project_id' => $connection->project_id,
             'backup_connection_id' => $connection->id,
+            'execution_id' => (string) Str::uuid(),
             'disk' => config('backups.disk', 's3'),
             'path' => "database-backups/{$connection->client_id}/demo/{$filename}",
             'filename' => $filename,

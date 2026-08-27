@@ -36,7 +36,8 @@ it('lets the authenticated user choose an avatar from generated options', functi
 
     $component
         ->assertSet('isOpen', true)
-        ->assertCount('options', 10)
+        ->assertCount('options', 20)
+        ->assertSet('options.0', 'avatars/options/robot-new-1.svg')
         ->assertSee('storage/avatars/', false)
         ->call('close')
         ->call('open')

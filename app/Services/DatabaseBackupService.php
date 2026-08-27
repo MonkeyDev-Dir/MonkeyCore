@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Jobs\ProcessDatabaseBackup;
 use App\Models\BackupConnection;
+use App\Models\BackupDatabaseType;
 use App\Models\Client;
 use App\Models\DatabaseBackup;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -16,10 +20,21 @@ use Symfony\Component\Process\Process;
 
 class DatabaseBackupService
 {
-    /** @return array{completed: int, failed: int} */
+    private const MaxDisplayedBackups = 200;
+
+    /** @return Collection<int, BackupDatabaseType> */
+    public function availableDatabaseTypes(): Collection
+    {
+        return BackupDatabaseType::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
+    /** @return array{completed: int, failed: int, queued: int} */
     public function createAll(): array
     {
-        $summary = ['completed' => 0, 'failed' => 0];
+        $summary = ['completed' => 0, 'failed' => 0, 'queued' => 0];
         $startedAt = microtime(true);
         $activeConnections = BackupConnection::query()->where('is_active', true)->count();
 
@@ -30,29 +45,37 @@ class DatabaseBackupService
         ]);
 
         BackupConnection::query()
-            ->with(['client', 'project'])
             ->where('is_active', true)
             ->each(function (BackupConnection $connection) use (&$summary): void {
-                $connectionStartedAt = microtime(true);
-                $context = $this->connectionContext($connection);
-
-                Log::channel('backups')->info('Respaldo de conexión iniciado', $context);
+                $backup = DatabaseBackup::query()->create([
+                    'client_id' => $connection->client_id,
+                    'project_id' => $connection->project_id,
+                    'backup_connection_id' => $connection->id,
+                    'execution_id' => (string) Str::uuid(),
+                    'disk' => $this->disk(),
+                    'status' => 'queued',
+                    'metadata' => ['queued_at' => now()->toIso8601String()],
+                ]);
 
                 try {
-                    $backup = $this->createForConnection($connection);
-                    $summary['completed']++;
-
-                    Log::channel('backups')->info('Respaldo de conexión completado', $context + [
-                        'backup_id' => $backup->id,
-                        'path' => $backup->path,
-                        'size' => $backup->size,
-                        'duration_ms' => $this->durationInMilliseconds($connectionStartedAt),
-                    ]);
+                    ProcessDatabaseBackup::dispatch($backup->id);
+                    $summary['queued']++;
                 } catch (\Throwable $exception) {
+                    $backup->update([
+                        'status' => 'failed',
+                        'completed_at' => now(),
+                        'error_message' => Str::limit($exception->getMessage(), 2000),
+                        'error_output' => Str::limit($exception->getMessage(), 10000),
+                        'metadata' => [
+                            'exception' => $exception::class,
+                            'phase' => 'dispatch',
+                        ],
+                    ]);
                     $summary['failed']++;
-                    $this->recordFailure($connection, $exception);
-                    Log::channel('backups')->error('Respaldo de conexión fallido', $context + [
-                        'duration_ms' => $this->durationInMilliseconds($connectionStartedAt),
+
+                    Log::channel('backups')->error('Job de respaldo no pudo ser encolado', [
+                        'backup_id' => $backup->id,
+                        'backup_connection_id' => $connection->id,
                         'exception' => $exception::class,
                         'error' => $exception->getMessage(),
                     ]);
@@ -65,13 +88,14 @@ class DatabaseBackupService
         Log::channel('backups')->info('Proceso de respaldos completado', [
             'completed' => $summary['completed'],
             'failed' => $summary['failed'],
+            'queued' => $summary['queued'],
             'duration_ms' => $this->durationInMilliseconds($startedAt),
         ]);
 
         return $summary;
     }
 
-    public function createForConnection(BackupConnection $connection): DatabaseBackup
+    public function createForConnection(BackupConnection $connection, ?DatabaseBackup $backup = null): DatabaseBackup
     {
         $startedAt = microtime(true);
         $context = $this->connectionContext($connection);
@@ -79,8 +103,19 @@ class DatabaseBackupService
         Log::channel('backups')->debug('Preparación del respaldo iniciada', $context + [
             'ssh_key_configured' => $connection->ssh_private_key !== null && $connection->ssh_private_key !== '',
             'postgres_password_configured' => $connection->postgres_password !== null && $connection->postgres_password !== '',
+            'mysql_password_configured' => $connection->mysql_password !== null && $connection->mysql_password !== '',
         ]);
 
+        $backup ??= DatabaseBackup::query()->create([
+            'client_id' => $connection->client_id,
+            'project_id' => $connection->project_id,
+            'backup_connection_id' => $connection->id,
+            'execution_id' => (string) Str::uuid(),
+            'disk' => $this->disk(),
+            'status' => 'running',
+            'started_at' => now(),
+        ]);
+        $backup->update(['command' => $this->commandDescription($connection)]);
         $temporaryPath = tempnam(storage_path('app'), 'database-backup-');
 
         if ($temporaryPath === false) {
@@ -91,10 +126,11 @@ class DatabaseBackupService
 
         try {
             $keyPath = $this->writePrivateKey($connection);
-            $this->dumpRemoteDatabase($connection, $temporaryPath, $keyPath);
+            $execution = $this->dumpRemoteDatabase($connection, $temporaryPath, $keyPath);
 
             $timestamp = CarbonImmutable::now(config('backups.timezone'));
-            $name = "backup-{$timestamp->format('Y-m-d-His')}.backup";
+            $extension = $connection->database_type === 'mysql' ? 'sql.gz' : 'backup';
+            $name = "backup-{$timestamp->format('Y-m-d-His')}.{$extension}";
             $path = trim(config('backups.path').'/'.$connection->client_id.'/'.$connection->id.'/'.$name, '/');
             $disk = Storage::disk($this->disk());
             $stream = fopen($temporaryPath, 'rb');
@@ -118,23 +154,56 @@ class DatabaseBackupService
 
             $size = $disk->size($path);
 
+            if (! $disk->exists($path)) {
+                throw new RuntimeException('El almacenamiento no confirmó la existencia del respaldo.');
+            }
+
+            if ($size !== filesize($temporaryPath)) {
+                throw new RuntimeException('El tamaño del respaldo en almacenamiento no coincide con el archivo generado.');
+            }
+
+            $checksum = hash_file('sha256', $temporaryPath);
+
+            if ($checksum === false) {
+                throw new RuntimeException('No fue posible calcular la huella del respaldo generado.');
+            }
+
+            Log::channel('backups')->info('Verificación del respaldo en almacenamiento completada', $context + [
+                'disk' => $this->disk(),
+                'path' => $path,
+                'stored_size' => $size,
+                'checksum' => $checksum,
+                'checksum_algorithm' => 'sha256',
+            ]);
+
             Log::channel('backups')->info('Carga del respaldo a almacenamiento completada', $context + [
                 'disk' => $this->disk(),
                 'path' => $path,
                 'size' => $size,
             ]);
 
-            $backup = DatabaseBackup::query()->create([
-                'client_id' => $connection->client_id,
-                'project_id' => $connection->project_id,
-                'backup_connection_id' => $connection->id,
+            $backup->update([
                 'disk' => $this->disk(),
                 'path' => $path,
                 'filename' => $name,
                 'size' => $size,
                 'status' => 'completed',
+                'exit_code' => $execution['exit_code'],
+                'duration_ms' => $this->durationInMilliseconds($startedAt),
+                'checksum' => $checksum,
+                'started_at' => $backup->started_at ?? $timestamp,
+                'completed_at' => now(),
+                'storage_verified_at' => now(),
                 'generated_at' => $timestamp,
+                'metadata' => [
+                    'remote_duration_ms' => $execution['duration_ms'],
+                    'output_size' => $execution['output_size'],
+                    'stored_size' => $size,
+                    'storage_exists' => true,
+                    'checksum_algorithm' => 'sha256',
+                ],
             ]);
+            $backup->refresh();
 
             Log::channel('backups')->debug('Registro del respaldo persistido', $context + [
                 'backup_id' => $backup->id,
@@ -147,6 +216,34 @@ class DatabaseBackupService
                 unlink($temporaryPath);
             }
 
+            if ($keyPath !== null && is_file($keyPath)) {
+                unlink($keyPath);
+            }
+        }
+    }
+
+    public function testConnection(BackupConnection $connection): void
+    {
+        $databaseType = $connection->databaseType;
+
+        if ($databaseType === null || ! $databaseType->is_active) {
+            throw new RuntimeException('El tipo de base de datos no está disponible para comprobar la conexión.');
+        }
+
+        $keyPath = null;
+
+        try {
+            $keyPath = $this->writePrivateKey($connection);
+            $process = new Process($this->buildSshCommand($connection, $this->buildRemoteDumpCommand($connection, $databaseType, true), $keyPath));
+            $process->setTimeout(120);
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                throw new RuntimeException('La conexión falló: '.Str::limit(trim($process->getErrorOutput()), 1000));
+            }
+
+            Log::channel('backups')->info('Conexión de respaldo comprobada', $this->connectionContext($connection));
+        } finally {
             if ($keyPath !== null && is_file($keyPath)) {
                 unlink($keyPath);
             }
@@ -197,7 +294,7 @@ class DatabaseBackupService
     }
 
     /** @return array<int, array{path: string, name: string, size: int, last_modified: CarbonImmutable}> */
-    public function all(): array
+    public function all(?int $limit = null): array
     {
         $disk = Storage::disk($this->disk());
         $files = [];
@@ -212,14 +309,94 @@ class DatabaseBackupService
             $files[] = [
                 'path' => $path,
                 'name' => basename($path),
-                'size' => $disk->size($path),
                 'last_modified' => $timestamp,
             ];
         }
 
         usort($files, fn (array $left, array $right): int => $right['last_modified']->getTimestamp() <=> $left['last_modified']->getTimestamp());
 
-        return $files;
+        return collect($files)
+            ->when($limit !== null, fn (Collection $files): Collection => $files->take($limit))
+            ->map(fn (array $file): array => [
+                ...$file,
+                'size' => $disk->size($file['path']),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return LengthAwarePaginator<int, array<string, mixed>> */
+    public function paginateProcessed(string $search = '', int $perPage = 10): LengthAwarePaginator
+    {
+        $query = DatabaseBackup::query()
+            ->with(['client', 'project', 'backupConnection'])
+            ->where('status', 'completed')
+            ->whereNotNull('generated_at')
+            ->when(trim($search) !== '', function (Builder $query) use ($search): void {
+                $term = '%'.Str::lower(Str::ascii(trim($search))).'%';
+
+                $query->where(function (Builder $query) use ($term): void {
+                    $query->whereRaw('LOWER(filename) LIKE ?', [$term])
+                        ->orWhereHas('client', fn (Builder $query): Builder => $query->whereRaw('LOWER(name) LIKE ?', [$term])->orWhereRaw('LOWER(code) LIKE ?', [$term]))
+                        ->orWhereHas('project', fn (Builder $query): Builder => $query->whereRaw('LOWER(name) LIKE ?', [$term]))
+                        ->orWhereHas('backupConnection', fn (Builder $query): Builder => $query->whereRaw('LOWER(name) LIKE ?', [$term]));
+                });
+            })
+            ->orderByDesc('generated_at');
+
+        if (DatabaseBackup::query()->where('status', 'completed')->exists()) {
+            $total = min(
+                $query->clone()
+                    ->limit(self::MaxDisplayedBackups + 1)
+                    ->toBase()
+                    ->get(['id'])
+                    ->count(),
+                self::MaxDisplayedBackups,
+            );
+
+            return $query
+                ->limit(self::MaxDisplayedBackups)
+                ->paginate($perPage, ['*'], 'page', null, $total)
+                ->through(fn (DatabaseBackup $backup): array => [
+                    'id' => $backup->id,
+                    'name' => $backup->filename,
+                    'path' => $backup->path,
+                    'size' => $backup->size ?? 0,
+                    'last_modified' => $backup->generated_at,
+                    'client_code' => $backup->client?->code,
+                    'client_name' => $backup->client?->name,
+                    'project_name' => $backup->project?->name,
+                    'database_type' => $backup->backupConnection?->database_type ?? 'postgresql',
+                    'extension' => pathinfo((string) $backup->filename, PATHINFO_EXTENSION),
+                ]);
+        }
+
+        $files = collect($this->all(self::MaxDisplayedBackups))
+            ->when(trim($search) !== '', fn (Collection $files): Collection => $files->filter(
+                fn (array $file): bool => Str::contains(
+                    Str::lower(Str::ascii($file['name'])),
+                    Str::lower(Str::ascii(trim($search))),
+                ),
+            ))
+            ->map(fn (array $file): array => [
+                ...$file,
+                'id' => null,
+                'client_code' => null,
+                'client_name' => null,
+                'project_name' => null,
+                'database_type' => 'postgresql',
+                'extension' => pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION),
+            ])
+            ->values();
+        $page = Paginator::resolveCurrentPage();
+
+        return new LengthAwarePaginator(
+            $files->forPage($page, $perPage)->values(),
+            $files->count(),
+            $perPage,
+            $page,
+            ['path' => Paginator::resolveCurrentPath()],
+        );
     }
 
     public function readStream(string $path): mixed
@@ -362,33 +539,24 @@ class DatabaseBackupService
         ]);
     }
 
-    private function dumpRemoteDatabase(BackupConnection $connection, string $temporaryPath, ?string $keyPath): void
+    /** @return array{exit_code: int|null, duration_ms: int, output_size: int|false} */
+    private function dumpRemoteDatabase(BackupConnection $connection, string $temporaryPath, ?string $keyPath): array
     {
         $startedAt = microtime(true);
         $context = $this->connectionContext($connection);
+        $databaseType = $connection->databaseType;
 
-        Log::channel('backups')->info('Ejecución remota de pg_dump iniciada', $context + [
-            'ssh_key_configured' => $keyPath !== null,
-        ]);
-
-        $password = $connection->postgres_password === null
-            ? ''
-            : 'PGPASSWORD='.escapeshellarg($connection->postgres_password).' ';
-        $remoteCommand = sprintf(
-            '%spg_dump --host=%s --port=%d --username=%s --format=custom --no-owner --no-privileges %s',
-            $password,
-            escapeshellarg($connection->postgres_host),
-            $connection->postgres_port,
-            escapeshellarg($connection->postgres_user),
-            escapeshellarg($connection->postgres_database),
-        );
-        $sshCommand = ['ssh', '-p', (string) $connection->ssh_port, '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new'];
-
-        if ($keyPath !== null) {
-            $sshCommand = [...$sshCommand, '-i', $keyPath];
+        if ($databaseType === null || ! $databaseType->is_active) {
+            throw new RuntimeException('El tipo de base de datos no está disponible para respaldos.');
         }
 
-        $sshCommand = [...$sshCommand, "{$connection->ssh_user}@{$connection->ssh_host}", $remoteCommand];
+        Log::channel('backups')->info('Ejecución remota de respaldo iniciada', $context + [
+            'ssh_key_configured' => $keyPath !== null,
+            'backup_command' => $databaseType->backup_command,
+        ]);
+
+        $remoteCommand = $this->buildRemoteDumpCommand($connection, $databaseType);
+        $sshCommand = $this->buildSshCommand($connection, $remoteCommand, $keyPath);
         $output = fopen($temporaryPath, 'wb');
 
         if ($output === false) {
@@ -408,7 +576,7 @@ class DatabaseBackupService
         }
 
         if (! $process->isSuccessful()) {
-            Log::channel('backups')->error('Ejecución remota de pg_dump fallida', $context + [
+            Log::channel('backups')->error('Ejecución remota de respaldo fallida', $context + [
                 'duration_ms' => $this->durationInMilliseconds($startedAt),
                 'exit_code' => $process->getExitCode(),
                 'error_output' => Str::limit(trim($process->getErrorOutput()), 1000),
@@ -417,11 +585,86 @@ class DatabaseBackupService
             throw new RuntimeException('El respaldo remoto falló: '.Str::limit(trim($process->getErrorOutput()), 1000));
         }
 
-        Log::channel('backups')->info('Ejecución remota de pg_dump completada', $context + [
+        Log::channel('backups')->info('Ejecución remota de respaldo completada', $context + [
             'duration_ms' => $this->durationInMilliseconds($startedAt),
             'exit_code' => $process->getExitCode(),
             'output_size' => is_file($temporaryPath) ? filesize($temporaryPath) : null,
         ]);
+
+        return [
+            'exit_code' => $process->getExitCode(),
+            'duration_ms' => $this->durationInMilliseconds($startedAt),
+            'output_size' => is_file($temporaryPath) ? filesize($temporaryPath) : false,
+        ];
+    }
+
+    private function commandDescription(BackupConnection $connection): string
+    {
+        $databaseType = $connection->databaseType;
+
+        return sprintf(
+            '%s --host=%s --port=%d --user=%s --database=%s',
+            $databaseType?->backup_command ?? $connection->database_type,
+            $connection->database_type === 'mysql' ? $connection->mysql_host : $connection->postgres_host,
+            $connection->database_type === 'mysql' ? $connection->mysql_port : $connection->postgres_port,
+            $connection->database_type === 'mysql' ? $connection->mysql_user : $connection->postgres_user,
+            $connection->database_type === 'mysql' ? $connection->mysql_database : $connection->postgres_database,
+        );
+    }
+
+    private function buildRemoteDumpCommand(BackupConnection $connection, BackupDatabaseType $databaseType, bool $checkOnly = false): string
+    {
+        if ($databaseType->key === 'mysql') {
+            $password = $connection->mysql_password === null
+                ? ''
+                : 'MYSQL_PWD='.escapeshellarg($connection->mysql_password).' ';
+            $options = $checkOnly
+                ? '--no-data --skip-comments --compact'
+                : '--single-transaction --routines --triggers --events';
+
+            return sprintf(
+                '%s%s --host=%s --port=%d --user=%s %s --databases %s%s',
+                $password,
+                escapeshellarg($databaseType->backup_command),
+                escapeshellarg($connection->mysql_host),
+                $connection->mysql_port,
+                escapeshellarg($connection->mysql_user),
+                $options,
+                escapeshellarg($connection->mysql_database),
+                $checkOnly ? ' > /dev/null' : ' | gzip',
+            );
+        }
+
+        $password = $connection->postgres_password === null
+            ? ''
+            : 'PGPASSWORD='.escapeshellarg($connection->postgres_password).' ';
+        $options = $checkOnly
+            ? '--schema-only --no-owner --no-privileges'
+            : '--format=custom --no-owner --no-privileges';
+
+        return sprintf(
+            '%s%s --host=%s --port=%d --username=%s %s %s%s',
+            $password,
+            escapeshellarg($databaseType->backup_command),
+            escapeshellarg($connection->postgres_host),
+            $connection->postgres_port,
+            escapeshellarg($connection->postgres_user),
+            $options,
+            escapeshellarg($connection->postgres_database),
+            $checkOnly ? ' > /dev/null' : '',
+        );
+    }
+
+    /** @return array<int, string> */
+    private function buildSshCommand(BackupConnection $connection, string $remoteCommand, ?string $keyPath): array
+    {
+        $sshCommand = ['ssh', '-p', (string) $connection->ssh_port, '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new'];
+
+        if ($keyPath !== null) {
+            $sshCommand = [...$sshCommand, '-i', $keyPath];
+        }
+
+        return [...$sshCommand, "{$connection->ssh_user}@{$connection->ssh_host}", $remoteCommand];
     }
 
     private function writePrivateKey(BackupConnection $connection): ?string
@@ -439,21 +682,6 @@ class DatabaseBackupService
         chmod($path, 0600);
 
         return $path;
-    }
-
-    private function recordFailure(BackupConnection $connection, \Throwable $exception): void
-    {
-        DatabaseBackup::query()->create([
-            'client_id' => $connection->client_id,
-            'project_id' => $connection->project_id,
-            'backup_connection_id' => $connection->id,
-            'disk' => $this->disk(),
-            'path' => '',
-            'filename' => '',
-            'status' => 'failed',
-            'error_message' => Str::limit($exception->getMessage(), 2000),
-            'generated_at' => CarbonImmutable::now(config('backups.timezone')),
-        ]);
     }
 
     private function dumpDatabase(string $temporaryPath): void
@@ -546,6 +774,10 @@ class DatabaseBackupService
             'postgres_port' => $connection->postgres_port,
             'postgres_database' => $connection->postgres_database,
             'postgres_user' => $connection->postgres_user,
+            'mysql_host' => $connection->mysql_host,
+            'mysql_port' => $connection->mysql_port,
+            'mysql_database' => $connection->mysql_database,
+            'mysql_user' => $connection->mysql_user,
         ];
     }
 

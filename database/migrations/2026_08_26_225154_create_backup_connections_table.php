@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained()->cascadeOnDelete();
             $table->foreignId('project_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
+            $table->string('database_type')->default('postgresql');
             $table->string('ssh_host');
             $table->unsignedSmallInteger('ssh_port')->default(22);
             $table->string('ssh_user');
@@ -25,6 +26,11 @@ return new class extends Migration
             $table->string('postgres_database');
             $table->string('postgres_user');
             $table->text('postgres_password')->nullable();
+            $table->string('mysql_host')->nullable();
+            $table->unsignedSmallInteger('mysql_port')->nullable();
+            $table->string('mysql_database')->nullable();
+            $table->string('mysql_user')->nullable();
+            $table->text('mysql_password')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

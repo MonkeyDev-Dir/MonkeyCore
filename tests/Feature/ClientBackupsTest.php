@@ -1,13 +1,17 @@
 <?php
 
+use App\Livewire\Clients\BackupConnectionModal;
 use App\Livewire\Clients\ClientAnnualBackups;
+use App\Livewire\Clients\ClientBackups;
 use App\Livewire\Clients\ClientMonthlyBackups;
 use App\Livewire\Clients\ClientWeeklyBackups;
 use App\Models\BackupConnection;
+use App\Models\BackupDatabaseType;
 use App\Models\Client;
 use App\Models\DatabaseBackup;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\DatabaseBackupService;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -56,6 +60,135 @@ it('filters client backups by project', function () {
     Livewire::test(ClientWeeklyBackups::class, ['clientCode' => $client->code, 'projectId' => $firstProject->id])
         ->assertSee('project-one.backup')
         ->assertDontSee('project-two.backup');
+});
+
+it('creates a backup connection for the selected client and project', function () {
+    $client = Client::factory()->create();
+    $project = Project::factory()->create(['client_id' => $client->id]);
+    BackupDatabaseType::factory()->create(['key' => 'postgresql', 'name' => 'PostgreSQL', 'backup_command' => 'pg_dump']);
+
+    Livewire::test(BackupConnectionModal::class)
+        ->call('openCreate', $client->code)
+        ->fill([
+            'name' => 'Producción',
+            'projectId' => $project->id,
+            'sshHost' => '10.0.0.10',
+            'sshUser' => 'forge',
+            'postgresDatabase' => 'app',
+            'postgresUser' => 'postgres',
+            'postgresPassword' => 'secret',
+        ])
+        ->call('save')
+        ->assertSet('isOpen', false);
+
+    $connection = BackupConnection::query()->where('name', 'Producción')->firstOrFail();
+
+    expect($connection->client_id)->toBe($client->id)
+        ->and($connection->project_id)->toBe($project->id)
+        ->and($connection->postgres_password)->toBe('secret');
+});
+
+it('does not allow assigning a project from another client to a backup connection', function () {
+    $client = Client::factory()->create();
+    $otherProject = Project::factory()->create();
+
+    Livewire::test(BackupConnectionModal::class)
+        ->call('openCreate', $client->code)
+        ->fill([
+            'name' => 'Producción',
+            'projectId' => $otherProject->id,
+            'sshHost' => '10.0.0.10',
+            'sshUser' => 'forge',
+            'postgresDatabase' => 'app',
+            'postgresUser' => 'postgres',
+        ])
+        ->call('save')
+        ->assertHasErrors(['projectId']);
+});
+
+it('creates a MySQL backup connection using its database fields', function () {
+    $client = Client::factory()->create();
+    BackupDatabaseType::factory()->create(['key' => 'mysql', 'name' => 'MySQL', 'backup_command' => 'mysqldump']);
+
+    Livewire::test(BackupConnectionModal::class)
+        ->call('openCreate', $client->code)
+        ->set('databaseType', 'mysql')
+        ->fill([
+            'name' => 'MySQL producción',
+            'sshHost' => '204.48.27.226',
+            'sshUser' => 'forge',
+            'mysqlDatabase' => 'mi_base',
+            'mysqlUser' => 'mi_usuario',
+            'mysqlPassword' => 'secret',
+        ])
+        ->call('save')
+        ->assertSet('isOpen', false);
+
+    $connection = BackupConnection::query()->where('name', 'MySQL producción')->firstOrFail();
+
+    expect($connection->database_type)->toBe('mysql')
+        ->and($connection->mysql_database)->toBe('mi_base')
+        ->and($connection->mysql_password)->toBe('secret');
+});
+
+it('opens a backup connection for editing and preserves omitted secrets', function () {
+    $client = Client::factory()->create();
+    $project = Project::factory()->create(['client_id' => $client->id]);
+    BackupDatabaseType::factory()->create(['key' => 'postgresql', 'name' => 'PostgreSQL', 'backup_command' => 'pg_dump']);
+    $connection = BackupConnection::factory()->create([
+        'client_id' => $client->id,
+        'project_id' => $project->id,
+        'name' => 'Producción',
+        'postgres_password' => 'secret',
+    ]);
+
+    Livewire::test(BackupConnectionModal::class)
+        ->call('openEdit', $client->code, $connection->id)
+        ->assertSet('connectionId', $connection->id)
+        ->assertSet('name', 'Producción')
+        ->assertSet('postgresPassword', '')
+        ->assertSee('Configuración de respaldo')
+        ->assertDontSee('Nueva configuración de respaldo')
+        ->call('save')
+        ->assertSet('isOpen', false);
+
+    expect($connection->refresh()->postgres_password)->toBe('secret');
+});
+
+it('checks a backup connection without creating a backup', function () {
+    $client = Client::factory()->create();
+    $databaseType = BackupDatabaseType::factory()->create(['key' => 'postgresql', 'name' => 'PostgreSQL', 'backup_command' => 'pg_dump']);
+    $backupService = Mockery::mock(DatabaseBackupService::class);
+    $backupService->shouldReceive('availableDatabaseTypes')->once()->andReturn(collect([$databaseType]));
+    $backupService->shouldReceive('testConnection')->once()->andReturnUsing(function (BackupConnection $connection): void {
+        expect($connection->name)->toBe('Producción');
+    });
+    $this->app->instance(DatabaseBackupService::class, $backupService);
+
+    Livewire::test(BackupConnectionModal::class)
+        ->call('openCreate', $client->code)
+        ->fill([
+            'name' => 'Producción',
+            'sshHost' => '10.0.0.10',
+            'sshUser' => 'forge',
+            'postgresDatabase' => 'app',
+            'postgresUser' => 'postgres',
+            'postgresPassword' => 'secret',
+        ])
+        ->call('testConnection')
+        ->assertHasNoErrors()
+        ->assertDispatched('backup-connection-tested');
+
+    expect(BackupConnection::query()->where('name', 'Producción')->exists())->toBeFalse();
+});
+
+it('renders backup connections as edit actions', function () {
+    $client = Client::factory()->create();
+    $connection = BackupConnection::factory()->create(['client_id' => $client->id]);
+
+    Livewire::test(ClientBackups::class, ['clientCode' => $client->code])
+        ->assertSee('open-backup-connection-edit', false)
+        ->assertSee((string) $connection->id, false);
 });
 
 it('shows only the five latest backups for each day', function () {

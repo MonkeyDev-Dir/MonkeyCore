@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             FileTypeSeeder::class,
+            BackupDatabaseTypeSeeder::class,
             ClientSeeder::class,
             EtaIBackupConfigurationSeeder::class,
             ClientBackupsSeeder::class,

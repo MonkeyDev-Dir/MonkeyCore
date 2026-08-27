@@ -29,7 +29,40 @@ class AppServiceProvider extends ServiceProvider
         TallStackUi::customize()
             ->table()
             ->block('wrapper')
-            ->replace('dark:ring-dark-700', 'dark:ring-gray-900');
+            ->replace('dark:ring-dark-700', 'dark:ring-gray-900')
+            ->and
+            ->form()
+            ->block('input.base')
+            ->replace('dark:placeholder-dark-400 w-full rounded-md border-0 bg-transparent py-1.5 ring-0 placeholder:text-gray-400 focus:outline-hidden focus:ring-transparent sm:text-sm sm:leading-6', 'dark:placeholder-gray-400 w-full rounded-lg border-0 bg-transparent px-3 h-10 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:ring-0 dark:text-white/90')
+            ->and
+            ->form()
+            ->block('input.wrapper', 'flex w-full rounded-lg border border-gray-300 focus-within:border-brand-500 focus-within:ring-0 dark:border-gray-700')
+            ->and
+            ->form()
+            ->block('input.color.base', 'text-gray-800 dark:text-white/90')
+            ->and
+            ->form()
+            ->block('input.color.background', 'bg-white dark:bg-gray-900')
+            ->and
+            ->form()
+            ->block('input.color.disabled', 'bg-gray-100 dark:bg-gray-900');
+
+        TallStackUi::customize()
+            ->form('textarea')
+            ->block('input.base')
+            ->replace('dark:placeholder-dark-400 w-full rounded-md border-0 bg-transparent py-1.5 ring-0 placeholder:text-gray-400 focus:outline-hidden focus:ring-transparent sm:text-sm sm:leading-6', 'dark:placeholder-gray-400 w-full rounded-lg border-0 bg-transparent px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:ring-0 dark:text-white/90')
+            ->and
+            ->form('textarea')
+            ->block('input.wrapper', 'flex w-full rounded-lg border border-gray-300 focus-within:border-brand-500 focus-within:ring-0 dark:border-gray-700')
+            ->and
+            ->form('textarea')
+            ->block('input.color.base', 'text-gray-800 dark:text-white/90')
+            ->and
+            ->form('textarea')
+            ->block('input.color.background', 'bg-white dark:bg-gray-900')
+            ->and
+            ->form('textarea')
+            ->block('input.color.disabled', 'bg-gray-100 dark:bg-gray-900');
     }
 
     /**

@@ -10,9 +10,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BackupsController extends Controller
 {
-    public function index(DatabaseBackupService $backupService): View
+    public function index(): View
     {
-        return view('pages.backups', ['backups' => $backupService->all()]);
+        return view('pages.backups');
     }
 
     public function client(string $clientCode, ClientService $clientService): View

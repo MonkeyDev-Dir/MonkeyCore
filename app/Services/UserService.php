@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class UserService
 {
@@ -13,9 +15,24 @@ class UserService
     /**
      * @return Collection<int, User>
      */
-    public function all(): Collection
+    public function all(string $search = ''): Collection
     {
         return User::query()
+            ->when(trim($search) !== '', function ($query) use ($search): void {
+                $term = '%'.Str::lower(Str::ascii(trim($search))).'%';
+                $columns = ['name', 'lastname', 'ide', 'email'];
+
+                $query->where(function ($query) use ($term, $columns): void {
+                    foreach ($columns as $column) {
+                        $method = $column === 'name' ? 'whereRaw' : 'orWhereRaw';
+                        $expression = DB::connection()->getDriverName() === 'pgsql'
+                            ? "unaccent(lower(users.{$column}))"
+                            : "lower(users.{$column})";
+
+                        $query->{$method}("{$expression} LIKE ?", [$term]);
+                    }
+                });
+            })
             ->orderBy('name')
             ->orderBy('lastname')
             ->get();

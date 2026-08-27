@@ -1,17 +1,19 @@
-<div x-data="{ modalOpen: false }"
-    x-on:open-client-logo-modal.window="modalOpen = true; $wire.open($event.detail.clientCode)"
-    x-on:client-logo-updated.window="modalOpen = false; Toast.fire({ icon: 'success', title: $event.detail.message })">
-    <div x-cloak x-show="modalOpen" x-transition.opacity class="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-5">
-        <div class="fixed inset-0 bg-gray-950/70" x-on:click="modalOpen = false" wire:click="close"></div>
-        <div x-transition class="relative z-10 w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-800 dark:bg-gray-900 sm:rounded-3xl sm:p-8">
-            <x-common.modal-close x-on:click="modalOpen = false" wire:click="close" />
-
-            <div class="pr-8">
-                <h2 class="text-2xl font-semibold text-gray-800 dark:text-white/90">{{ __('Actualizar logo') }}</h2>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('Selecciona una nueva imagen para este cliente.') }}</p>
+<div x-data="{ modalReady: false }"
+    x-on:open-client-logo-modal.window="modalReady = false; $wire.open($event.detail.clientCode).then(() => modalReady = true)"
+    x-on:client-logo-updated.window="modalReady = false; Toast.fire({ icon: 'success', title: $event.detail.message })">
+    <x-common.form-modal id="client-logo-modal" :title="__('Actualizar logo')" :description="__('Selecciona una nueva imagen para este cliente.')" size="2xl">
+        <div x-cloak x-show="!modalReady" class="flex min-h-[300px] items-center justify-center" role="status" aria-live="polite">
+            <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                <svg class="h-5 w-5 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V1C6.925 1 2 5.925 2 12h2Zm8 8a8 8 0 0 1-8-8H1c0 6.075 4.925 11 11 11v-3Z"></path>
+                </svg>
+                <span>{{ __('Cargando información...') }}</span>
             </div>
+        </div>
 
-            <form wire:submit="save" class="mt-6 space-y-6">
+        <div x-cloak x-show="modalReady">
+            <form wire:submit="save" autocomplete="off" class="space-y-5">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <p class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Logo actual') }}</p>
@@ -48,14 +50,14 @@
                     @error('image')<small class="mt-1 block text-xs text-red-500">{{ $message }}</small>@enderror
                 </div>
 
-                <div class="flex justify-end gap-3">
-                    <button type="button" x-on:click="modalOpen = false" wire:click="close" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300">{{ __('Cancelar') }}</button>
-                    <button type="submit" wire:loading.attr="disabled" class="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">
+                <x-common.form-actions>
+                    <button type="button" x-on:click="$tsui.close.modal('client-logo-modal')" wire:click="close" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]">{{ __('Cancelar') }}</button>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50">
                         <span wire:loading.remove wire:target="save">{{ __('Actualizar logo') }}</span>
                         <span wire:loading wire:target="save">{{ __('Guardando...') }}</span>
                     </button>
-                </div>
+                </x-common.form-actions>
             </form>
         </div>
-    </div>
+    </x-common.form-modal>
 </div>

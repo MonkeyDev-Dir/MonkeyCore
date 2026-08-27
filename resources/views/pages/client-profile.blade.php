@@ -22,18 +22,19 @@
 
                 <div>
                     <h1 class="text-xl font-semibold text-gray-800 dark:text-white/90">{{ $client->name }}</h1>
-                    <span @class([
-                        'mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-                        'border border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-300' => $client->type === 'company',
-                        'border border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400' => $client->type !== 'company',
-                    ])>{{ __($client->type === 'company' ? 'Plan empresarial' : 'Plan personal') }}</span>
+                    <x-client-type-badge :type="$client->type" class="mt-2" />
                 </div>
             </div>
         </div>
 
         <div class="grid items-start grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             <section class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 xl:sticky xl:top-20">
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Información general') }}</h2>
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Información general') }}</h2>
+                    <button type="button" x-data x-on:click="window.dispatchEvent(new CustomEvent('open-client-edit', { detail: { clientCode: '{{ $client->code }}' } }))" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40 dark:hover:bg-gray-800" aria-label="{{ __('Editar información general') }}" title="{{ __('Editar información general') }}">
+                        <i data-lucide="pencil" class="h-4 w-4" aria-hidden="true"></i>
+                    </button>
+                </div>
                 <dl class="mt-5 space-y-4">
                     <div class="flex items-center gap-3">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300" aria-hidden="true">
@@ -107,5 +108,7 @@
     </div>
 
     <livewire:clients.client-logo-modal />
+    <livewire:clients.client-modal />
     <livewire:clients.project-modal />
+    <livewire:clients.backup-connection-modal />
 @endsection

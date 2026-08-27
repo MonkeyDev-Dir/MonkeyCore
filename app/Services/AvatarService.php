@@ -25,11 +25,11 @@ class AvatarService
      */
     public function generateRobotAvatars(): array
     {
-        return collect(range(1, 10))
+        return collect(range(1, 20))
             ->map(function (int $number): string {
-                $path = "avatars/options/robot-{$number}.svg";
+                $path = "avatars/options/robot-new-{$number}.svg";
 
-                return $this->createRobotAvatar("robot-option-{$number}", $path);
+                return $this->createRobotAvatar("robot-new-option-{$number}", $path);
             })
             ->all();
     }

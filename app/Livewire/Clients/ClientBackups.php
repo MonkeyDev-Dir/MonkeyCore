@@ -4,6 +4,7 @@ namespace App\Livewire\Clients;
 
 use App\Services\ClientService;
 use Illuminate\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ClientBackups extends Component
@@ -19,6 +20,9 @@ class ClientBackups extends Component
         $this->clientCode = $clientCode;
         $this->showHistory = $showHistory;
     }
+
+    #[On('backup-connection-saved')]
+    public function refreshConnections(): void {}
 
     public function render(ClientService $clientService): View
     {

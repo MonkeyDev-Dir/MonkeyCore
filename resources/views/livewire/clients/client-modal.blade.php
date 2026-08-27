@@ -1,24 +1,9 @@
-<div x-data="{ modalReady: false }"
-    x-on:open-client-create.window="modalReady = false; $wire.openCreate().then(() => modalReady = true)"
-    x-on:client-saved.window="Toast.fire({ icon: 'success', title: $event.detail.message })">
-    <x-modal id="client-modal" wire="isOpen" z-index="z-[70]" size="4xl" scrollable center :title="$clientId === null ? __('Nuevo cliente') : __('Editar cliente')" x-on:close="$wire.close()">
-
-            <div x-cloak x-show="!modalReady" class="flex min-h-[520px] items-center justify-center" role="status" aria-live="polite">
-                    <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                        <svg class="h-5 w-5 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V1C6.925 1 2 5.925 2 12h2Zm8 8a8 8 0 0 1-8-8H1c0 6.075 4.925 11 11 11v-3Z"></path>
-                        </svg>
-                        <span>{{ __('Cargando información...') }}</span>
-                    </div>
-                </div>
-
-            <div x-cloak x-show="modalReady">
-                <div class="mb-6 pr-8">
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('Registra la información general, el contacto y la dirección principal.') }}</p>
-                </div>
-
-                <form wire:submit="save" autocomplete="off" class="space-y-5" enctype="multipart/form-data">
+<div>
+    <x-common.form-modal id="client-modal" :title="$clientId === null ? __('Nuevo cliente') : __('Editar cliente')" :description="__('Registra la información general, el contacto y la dirección principal.')" size="4xl"
+        x-on:open-client-create.window="$wire.openCreate().then(() => $nextTick(() => $refs.modalContent.scrollTop = 0))"
+        x-on:open-client-edit.window="$wire.openEdit($event.detail.clientCode).then(() => $nextTick(() => $refs.modalContent.scrollTop = 0))"
+        x-on:client-saved.window="Toast.fire({ icon: 'success', title: $event.detail.message })">
+            <form wire:submit="save" autocomplete="off" class="space-y-5" enctype="multipart/form-data">
                     <fieldset wire:loading.attr="disabled" wire:target="lookupPerson, lookupCompany" class="contents">
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-12">
                         <div class="col-span-12 sm:col-span-6"><x-select.native id="client-type" wire:model.live="type" :label="__('Tipo')" :error="$errors->first('type')" class="h-10"><option value="company">{{ __('Empresa') }}</option><option value="person">{{ __('Persona') }}</option></x-select.native>@error('type')<small class="text-xs text-red-500">{{ $message }}</small>@enderror</div>
@@ -31,16 +16,27 @@
                         <div class="col-span-12 min-w-0 sm:col-span-6 sm:col-start-7"><x-input id="client-email" wire:model="email" type="email" autocomplete="off" :label="__('Correo electrónico')" /></div>
                         <div class="col-span-12 min-w-0 sm:col-span-6 sm:col-start-1"><x-input id="client-phone" wire:model="phone" type="text" autocomplete="off" :label="__('Teléfono')" /></div>
                         <div class="col-span-12 min-w-0 sm:col-span-6 sm:col-start-7"><x-input id="client-website" wire:model="website" type="url" autocomplete="off" :label="__('Sitio web')" /></div>
-                        <div class="col-span-12 sm:col-span-6"><label for="client-image" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Imagen o logo') }}</label><input id="client-image" wire:model="image" type="file" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500">@error('image')<small class="text-xs text-red-500">{{ $message }}</small>@enderror</div>
+                        <div class="col-span-12 sm:col-span-6"><label for="client-image" class="relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 py-7 text-center transition-colors hover:border-brand-400 hover:bg-brand-50/50 dark:border-gray-700 dark:bg-white/[0.03] dark:hover:border-brand-500 dark:hover:bg-brand-500/5">
+                            <svg class="h-8 w-8 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h2l1.25-1.5h6.5L16.5 6h2A1.5 1.5 0 0 1 20 7.5v9A1.5 1.5 0 0 1 18.5 18h-13A1.5 1.5 0 0 1 4 16.5v-9Z" stroke-linejoin="round" /><circle cx="12" cy="12" r="3.25" /></svg>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Haz clic para seleccionar una imagen') }}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('JPG, PNG o WEBP · máximo 2 MB') }}</span>
+                            <input id="client-image" wire:model="image" type="file" accept="image/jpeg,image/png,image/webp" class="absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                        </label>
+                        @error('image')<small class="text-xs text-red-500">{{ $message }}</small>@enderror</div>
                     </div>
                     @if($clientId !== null)
+                    <x-common.form-section>
                     <div><x-textarea id="client-details" wire:model="details" rows="3" autocomplete="off" :label="__('Detalles')" /></div>
-                    <div class="border-t border-gray-200 pt-5 dark:border-gray-800"><h3 class="mb-4 text-lg font-medium text-gray-800 dark:text-white/90">{{ __('Contacto principal') }}</h3><div class="grid grid-cols-1 gap-5 sm:grid-cols-2"><div><x-input id="contact-name" wire:model="contactName" type="text" autocomplete="off" :label="__('Nombre')" /></div><div><x-input id="contact-position" wire:model="contactPosition" type="text" autocomplete="off" :label="__('Cargo')" /></div><div><x-input id="contact-email" wire:model="contactEmail" type="email" autocomplete="off" :label="__('Correo del contacto')" /></div><div><x-input id="contact-phone" wire:model="contactPhone" type="text" autocomplete="off" :label="__('Teléfono del contacto')" /></div></div></div>
-                    <div class="border-t border-gray-200 pt-5 dark:border-gray-800"><h3 class="mb-4 text-lg font-medium text-gray-800 dark:text-white/90">{{ __('Dirección principal') }}</h3><div class="grid grid-cols-1 gap-5 sm:grid-cols-2"><div class="sm:col-span-2"><x-input id="address-line" wire:model="addressLine" type="text" autocomplete="off" :label="__('Dirección')" /></div><div><x-input id="address-city" wire:model="city" type="text" autocomplete="off" :label="__('Ciudad')" /></div><div><x-input id="address-state" wire:model="state" type="text" autocomplete="off" :label="__('Provincia o estado')" /></div><div><x-input id="address-country" wire:model="country" type="text" autocomplete="off" :label="__('País')" /></div><div><x-input id="address-postal-code" wire:model="postalCode" type="text" autocomplete="off" :label="__('Código postal')" /></div></div></div>
+                    </x-common.form-section>
+                    <x-common.form-section>
+                    <div class="pt-5"><h3 class="mb-4 text-lg font-medium text-gray-800 dark:text-white/90">{{ __('Contacto principal') }}</h3><div class="grid grid-cols-1 gap-5 sm:grid-cols-2"><div><x-input id="contact-name" wire:model="contactName" type="text" autocomplete="off" :label="__('Nombre')" /></div><div><x-input id="contact-position" wire:model="contactPosition" type="text" autocomplete="off" :label="__('Cargo')" /></div><div><x-input id="contact-email" wire:model="contactEmail" type="email" autocomplete="off" :label="__('Correo del contacto')" /></div><div><x-input id="contact-phone" wire:model="contactPhone" type="text" autocomplete="off" :label="__('Teléfono del contacto')" /></div></div></div>
+                    </x-common.form-section>
+                    <x-common.form-section>
+                    <div class="pt-5"><h3 class="mb-4 text-lg font-medium text-gray-800 dark:text-white/90">{{ __('Dirección principal') }}</h3><div class="grid grid-cols-1 gap-5 sm:grid-cols-2"><div class="sm:col-span-2"><x-input id="address-line" wire:model="addressLine" type="text" autocomplete="off" :label="__('Dirección')" /></div><div><x-input id="address-city" wire:model="city" type="text" autocomplete="off" :label="__('Ciudad')" /></div><div><x-input id="address-state" wire:model="state" type="text" autocomplete="off" :label="__('Provincia o estado')" /></div><div><x-input id="address-country" wire:model="country" type="text" autocomplete="off" :label="__('País')" /></div><div><x-input id="address-postal-code" wire:model="postalCode" type="text" autocomplete="off" :label="__('Código postal')" /></div></div></div>
+                    </x-common.form-section>
                     @endif
-                    <div class="flex justify-end gap-3 pt-3"><button type="button" x-on:click="$tsui.close.modal('client-modal')" wire:click="close" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300">{{ __('Cancelar') }}</button><button type="submit" wire:loading.attr="disabled" class="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"><span wire:loading.remove wire:target="save">{{ __('Guardar cliente') }}</span><span wire:loading wire:target="save">{{ __('Guardando...') }}</span></button></div>
+                    <x-common.form-actions><button type="button" x-on:click="$tsui.close.modal('client-modal')" wire:click="close" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]">{{ __('Cancelar') }}</button><button type="submit" wire:loading.attr="disabled" class="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"><span wire:loading.remove wire:target="save">{{ __('Guardar cliente') }}</span><span wire:loading wire:target="save">{{ __('Guardando...') }}</span></button></x-common.form-actions>
                     </fieldset>
-                </form>
-            </div>
-    </x-modal>
+            </form>
+    </x-common.form-modal>
 </div>

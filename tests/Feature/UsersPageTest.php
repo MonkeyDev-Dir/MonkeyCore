@@ -21,6 +21,21 @@ it('redirects guests from the users page', function () {
     $this->get('/users')->assertRedirectToRoute('login');
 });
 
+it('searches users by name, identification, or email', function () {
+    $viewer = User::factory()->create();
+    User::factory()->create(['name' => 'Usuario visible', 'ide' => 'ABC123', 'email' => 'visible@example.com']);
+    User::factory()->create(['name' => 'Otro usuario', 'ide' => 'XYZ789', 'email' => 'otro@example.com']);
+
+    Livewire::actingAs($viewer)
+        ->test(UsersTable::class)
+        ->set('search', 'abc123')
+        ->assertSee('Usuario visible')
+        ->assertDontSee('Otro usuario')
+        ->set('search', 'otro@example.com')
+        ->assertSee('Otro usuario')
+        ->assertDontSee('Usuario visible');
+});
+
 it('opens the user modal from the user name', function () {
     $viewer = User::factory()->create();
     $user = User::factory()->create();

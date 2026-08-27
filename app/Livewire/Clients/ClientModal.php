@@ -65,6 +65,37 @@ class ClientModal extends Component
         $this->isOpen = true;
     }
 
+    #[On('open-client-edit')]
+    public function openEdit(string $clientCode, ClientService $clientService): void
+    {
+        $client = $clientService->findByCodeOrFail($clientCode);
+        $contact = $client->contacts->firstWhere('is_primary', true) ?? $client->contacts->first();
+        $address = $client->addresses->firstWhere('is_primary', true) ?? $client->addresses->first();
+
+        $this->clientId = $client->id;
+        $this->type = $client->type;
+        $this->name = $client->name;
+        $this->legalName = $client->legal_name ?? '';
+        $this->taxId = $client->tax_id ?? '';
+        $this->email = $client->email ?? '';
+        $this->phone = $client->phone ?? '';
+        $this->website = $client->website ?? '';
+        $this->details = $client->details ?? '';
+        $this->contactName = $contact?->name ?? '';
+        $this->contactPosition = $contact?->position ?? '';
+        $this->contactEmail = $contact?->email ?? '';
+        $this->contactPhone = $contact?->phone ?? '';
+        $this->contactMobilePhone = $contact?->mobile_phone ?? '';
+        $this->addressLine = $address?->address_line ?? '';
+        $this->city = $address?->city ?? '';
+        $this->state = $address?->state ?? '';
+        $this->country = $address?->country ?? '';
+        $this->postalCode = $address?->postal_code ?? '';
+        $this->image = null;
+        $this->resetValidation();
+        $this->isOpen = true;
+    }
+
     public function close(): void
     {
         $this->isOpen = false;
@@ -168,6 +199,8 @@ class ClientModal extends Component
             'postalCode' => ['nullable', 'string', 'max:30'],
         ]);
 
+        $client = $this->clientId === null ? null : $clientService->findOrFail($this->clientId);
+
         $clientService->save([
             'type' => $validated['type'],
             'name' => $validated['name'],
@@ -192,10 +225,11 @@ class ClientModal extends Component
                 'country' => $validated['country'],
                 'postal_code' => $validated['postalCode'],
             ],
-        ], null, $this->image);
+        ], $client, $this->image);
 
+        $wasEditing = $this->clientId !== null;
         $this->close();
-        $this->dispatch('client-saved', message: __('Cliente creado correctamente.'));
+        $this->dispatch('client-saved', message: $wasEditing ? __('Cliente actualizado correctamente.') : __('Cliente creado correctamente.'));
     }
 
     private function resetForm(): void

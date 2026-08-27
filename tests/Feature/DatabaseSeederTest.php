@@ -15,9 +15,11 @@ it('seeds the initial user and demo users', function () {
     $this->seed(DatabaseSeeder::class);
 
     expect(User::count())->toBe(11)
-        ->and(Client::count())->toBe(11)
-        ->and(Client::query()->pluck('code')->unique())->toHaveCount(11)
-        ->and(BackupConnection::where('name', 'Metai')->count())->toBe(1)
+        ->and(Client::count())->toBe(2)
+        ->and(Client::query()->pluck('code')->unique())->toHaveCount(2)
+        ->and(BackupConnection::where('name', 'Metai Backup Config')->count())->toBe(1)
+        ->and(BackupConnection::where('name', 'CASC Backup Config')->count())->toBe(1)
+        ->and(BackupConnection::where('name', 'Portal Backup Config')->count())->toBe(1)
         ->and(User::where('email', 'me@gilberthrojas.com')->exists())->toBeTrue()
         ->and(User::whereNotNull('avatar_path')->count())->toBe(11);
 

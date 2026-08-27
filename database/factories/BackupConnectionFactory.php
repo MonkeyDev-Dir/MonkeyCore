@@ -22,6 +22,7 @@ class BackupConnectionFactory extends Factory
             'client_id' => Client::factory(),
             'project_id' => null,
             'name' => fake()->unique()->words(2, true),
+            'database_type' => 'postgresql',
             'ssh_host' => fake()->ipv4(),
             'ssh_port' => 22,
             'ssh_user' => 'forge',

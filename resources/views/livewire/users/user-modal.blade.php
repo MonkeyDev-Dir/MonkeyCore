@@ -2,7 +2,9 @@
     x-on:open-user-create.window="modalReady = false; $wire.openCreate().then(() => modalReady = true)"
     x-on:open-user-edit.window="modalReady = false; $wire.edit($event.detail.userId).then(() => modalReady = true)"
     x-on:user-saved.window="Toast.fire({ icon: 'success', title: $event.detail.message })">
-    <x-modal id="user-modal" wire="isOpen" z-index="z-[70]" size="2xl" scrollable center :title="$userId === null ? __('Nuevo usuario') : __('Editar usuario')" x-on:close="$wire.close()">
+    <x-modal id="user-modal" wire="isOpen" z-index="z-[70]" size="2xl" scrollable center x-on:close="$wire.close()">
+            <x-common.modal-close x-on:click="$tsui.close.modal('user-modal')" wire:click="close" />
+            <x-common.modal-header :title="$userId === null ? __('Nuevo usuario') : __('Editar usuario')" :description="__('Completa la información del usuario.')" />
 
             <div x-cloak x-show="!modalReady" class="flex min-h-[520px] items-center justify-center" role="status" aria-live="polite">
                 <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
@@ -15,12 +17,6 @@
             </div>
 
             <div x-cloak x-show="modalReady">
-            <div class="mb-6 pr-8">
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Completa la información del usuario.') }}
-                </p>
-            </div>
-
             <form wire:submit="save" autocomplete="off" class="space-y-5">
                 <fieldset wire:loading.attr="disabled" wire:target="lookupPerson" class="contents">
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-12">

@@ -2,6 +2,7 @@
 
 use App\Livewire\Clients\ClientLogoModal;
 use App\Livewire\Clients\ClientModal;
+use App\Livewire\Clients\ClientsTable;
 use App\Livewire\Clients\ProjectModal;
 use App\Models\Client;
 use App\Models\FileType;
@@ -30,6 +31,36 @@ it('shows the clients page to authenticated users', function () {
 
 it('redirects guests from the clients page', function () {
     $this->get(route('clients.index'))->assertRedirectToRoute('login');
+});
+
+it('searches clients by name, code, or email and paginates results', function () {
+    $user = User::factory()->create();
+    Client::factory()->create(['name' => 'Cliente visible', 'code' => 'ABC123', 'email' => 'visible@example.test']);
+    Client::factory()->create(['name' => 'Otro cliente', 'code' => 'XYZ789', 'email' => 'otro@example.test']);
+    Client::factory()->count(10)->create();
+
+    $table = Livewire::actingAs($user)->test(ClientsTable::class);
+
+    $table->assertSet('search', '')
+        ->set('search', 'ABC123')
+        ->assertSee('Cliente visible')
+        ->assertDontSee('Otro cliente');
+
+    $table->set('search', 'otro@example.test')
+        ->assertSee('Otro cliente')
+        ->assertDontSee('Cliente visible');
+});
+
+it('searches clients without considering case or accents', function () {
+    $user = User::factory()->create();
+    Client::factory()->create(['name' => 'Árbol Único', 'email' => 'contacto@example.test']);
+    Client::factory()->create(['name' => 'Cliente diferente', 'email' => 'otro@example.test']);
+
+    Livewire::actingAs($user)
+        ->test(ClientsTable::class)
+        ->set('search', 'ARBOL unico')
+        ->assertSee('Árbol Único')
+        ->assertDontSee('Cliente diferente');
 });
 
 it('saves sanitized rich text in a project description', function () {
@@ -171,7 +202,6 @@ it('shows only the initial information when creating a client', function () {
     Livewire::actingAs($user)
         ->test(ClientModal::class)
         ->call('openCreate')
-        ->assertSee(__('Cargando información...'))
         ->assertSee(__('Tipo'))
         ->assertDontSee(__('Razón social'))
         ->set('type', 'person')
@@ -245,7 +275,7 @@ it('opens the client profile from the clients table', function () {
     $this->actingAs($user)
         ->get(route('clients.index'))
         ->assertSee(route('clients.show', ['clientCode' => $client->code]), false)
-        ->assertSee('border-blue-300', false)
+        ->assertSee('border-blue-200', false)
         ->assertDontSee('href="'.route('clients.show', ['clientCode' => $client->id]).'"', false);
 
     $this->get(route('clients.show', ['clientCode' => $client->code]))
@@ -261,6 +291,29 @@ it('opens the client profile from the clients table', function () {
         ->assertSee(__('Correo electrónico'))
         ->assertSee('Proyecto visible')
         ->assertDontSee(__('Código: :code', ['code' => $client->code]));
+});
+
+it('edits general client information from the profile modal', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->create([
+        'name' => 'Cliente original',
+        'email' => 'original@example.test',
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(ClientModal::class)
+        ->call('openEdit', $client->code)
+        ->assertSet('name', 'Cliente original')
+        ->set('name', 'Cliente actualizado')
+        ->set('email', 'actualizado@example.test')
+        ->set('phone', '2475-6622')
+        ->call('save')
+        ->assertSet('isOpen', false)
+        ->assertDispatched('client-saved');
+
+    expect($client->refresh()->name)->toBe('Cliente actualizado')
+        ->and($client->email)->toBe('actualizado@example.test')
+        ->and($client->phone)->toBe('2475-6622');
 });
 
 it('updates a client logo from the profile modal and dispatches an update event', function () {

@@ -212,7 +212,11 @@
 }
 
 @utility menu-item-icon {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400;
+  @apply size-[18px] shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-gray-400;
+
+  & > svg {
+    @apply size-[18px];
+  }
 }
 
 @utility menu-item-icon-active {
