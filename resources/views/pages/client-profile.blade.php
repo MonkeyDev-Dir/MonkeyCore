@@ -31,9 +31,7 @@
             <section class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 xl:sticky xl:top-20">
                 <div class="flex items-center justify-between gap-3">
                     <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Información general') }}</h2>
-                    <button type="button" x-data x-on:click="window.dispatchEvent(new CustomEvent('open-client-edit', { detail: { clientCode: '{{ $client->code }}' } }))" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40 dark:hover:bg-gray-800" aria-label="{{ __('Editar información general') }}" title="{{ __('Editar información general') }}">
-                        <i data-lucide="pencil" class="h-4 w-4" aria-hidden="true"></i>
-                    </button>
+                    <x-common.edit-button :label="__('Editar información general')" x-data x-on:click="window.dispatchEvent(new CustomEvent('open-client-edit', { detail: { clientCode: '{{ $client->code }}' } }))" />
                 </div>
                 <dl class="mt-5 space-y-4">
                     <div class="flex items-center gap-3">
@@ -85,6 +83,9 @@
                             <button type="button" role="tab" x-bind:aria-selected="activeTab === 'projects'" x-on:click="activeTab = 'projects'" x-bind:class="activeTab === 'projects' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-colors">
                                 {{ __('Proyectos') }}
                             </button>
+                            <button type="button" role="tab" x-bind:aria-selected="activeTab === 'domains'" x-on:click="activeTab = 'domains'" x-bind:class="activeTab === 'domains' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'" class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-colors">
+                                {{ __('Dominios') }}
+                            </button>
                         </nav>
                     </div>
 
@@ -102,6 +103,10 @@
                     <div x-cloak x-show="activeTab === 'projects'" role="tabpanel" class="pt-6">
                         <livewire:clients.client-projects :client-code="$client->code" />
                     </div>
+
+                    <div x-cloak x-show="activeTab === 'domains'" role="tabpanel" class="pt-6">
+                        <livewire:clients.client-domains :client-code="$client->code" />
+                    </div>
                 </div>
             </section>
         </div>
@@ -110,5 +115,7 @@
     <livewire:clients.client-logo-modal />
     <livewire:clients.client-modal />
     <livewire:clients.project-modal />
+    <livewire:clients.project-credential-modal />
     <livewire:clients.backup-connection-modal />
+    <livewire:clients.domain-modal />
 @endsection

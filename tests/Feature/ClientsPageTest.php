@@ -3,10 +3,12 @@
 use App\Livewire\Clients\ClientLogoModal;
 use App\Livewire\Clients\ClientModal;
 use App\Livewire\Clients\ClientsTable;
+use App\Livewire\Clients\ProjectCredentialModal;
 use App\Livewire\Clients\ProjectModal;
 use App\Models\Client;
 use App\Models\FileType;
 use App\Models\Project;
+use App\Models\ProjectCredential;
 use App\Models\StoredFile;
 use App\Models\User;
 use App\Services\ClientService;
@@ -313,7 +315,24 @@ it('edits general client information from the profile modal', function () {
 
     expect($client->refresh()->name)->toBe('Cliente actualizado')
         ->and($client->email)->toBe('actualizado@example.test')
-        ->and($client->phone)->toBe('2475-6622');
+        ->and($client->phone)->toBe('2475 6622');
+});
+
+it('normalizes client and primary contact phone numbers when saving', function () {
+    $client = app(ClientService::class)->save([
+        'type' => 'company',
+        'name' => 'Cliente con teléfonos normalizados',
+        'phone' => '8562-6443',
+        'contact' => [
+            'name' => 'Contacto principal',
+            'phone' => '(123) 45-67',
+            'mobile_phone' => '+506 1234 5678',
+        ],
+    ]);
+
+    expect($client->phone)->toBe('8562 6443')
+        ->and($client->contacts()->firstOrFail()->phone)->toBe('123-45-67')
+        ->and($client->contacts()->firstOrFail()->mobile_phone)->toBe('50612345678');
 });
 
 it('updates a client logo from the profile modal and dispatches an update event', function () {
@@ -354,7 +373,8 @@ it('lists client projects and creates one through the profile modal', function (
     $this->actingAs($user)
         ->get(route('clients.show', ['clientCode' => $client->code]))
         ->assertSee(__('Proyectos'))
-        ->assertSee(__('Nuevo proyecto'));
+        ->assertSee(__('Nuevo proyecto'))
+        ->assertDontSee(__('No hay credenciales registradas.'));
 
     Livewire::actingAs($user)
         ->test(ProjectModal::class)
@@ -370,6 +390,7 @@ it('lists client projects and creates one through the profile modal', function (
     expect($project->client_id)->toBe($client->id)
         ->and($project->code)->toStartWith('PROJ-')
         ->and($project->description)->toBe('Proyecto de integración');
+
 });
 
 it('edits a project from its client profile', function () {
@@ -387,6 +408,42 @@ it('edits a project from its client profile', function () {
         ->assertDispatched('project-saved');
 
     expect($project->refresh()->name)->toBe('Proyecto actualizado');
+});
+
+it('creates and updates shared project credentials with an encrypted password', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->create();
+    $project = Project::factory()->create(['client_id' => $client->id]);
+
+    $credentialModal = Livewire::actingAs($user)
+        ->test(ProjectCredentialModal::class)
+        ->call('openCreate', $client->code, $project->id)
+        ->set('name', 'WordPress producción')
+        ->set('type', 'wordpress')
+        ->set('loginUrl', 'https://example.test/wp-admin')
+        ->set('username', 'admin@example.test')
+        ->set('password', 'secret-password')
+        ->set('notes', 'Acceso principal')
+        ->assertSet('password', 'secret-password');
+
+    $credentialModal
+        ->call('save')
+        ->assertSet('isOpen', false)
+        ->assertDispatched('project-credential-saved');
+
+    $credential = ProjectCredential::query()->where('project_id', $project->id)->firstOrFail();
+
+    expect($credential->password)->toBe('secret-password')
+        ->and($credential->getRawOriginal('password'))->not->toBe('secret-password');
+
+    Livewire::actingAs($user)
+        ->test(ProjectCredentialModal::class)
+        ->call('openEdit', $client->code, $project->id, $credential->id)
+        ->set('username', 'editor@example.test')
+        ->call('save');
+
+    expect($credential->refresh()->username)->toBe('editor@example.test')
+        ->and($credential->password)->toBe('secret-password');
 });
 
 it('does not allow editing a project from another client', function () {

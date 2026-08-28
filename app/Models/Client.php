@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property-read Collection<int, ClientContact> $contacts
  * @property-read Collection<int, ClientAddress> $addresses
+ * @property-read Collection<int, Domain> $domains
  * @property string $type
  * @property string $code
  * @property string $name
@@ -74,6 +75,12 @@ class Client extends Model
     public function databaseBackups(): HasMany
     {
         return $this->hasMany(DatabaseBackup::class);
+    }
+
+    /** @return HasMany<Domain, $this> */
+    public function domains(): HasMany
+    {
+        return $this->hasMany(Domain::class);
     }
 
     /** @return BelongsTo<User, $this> */

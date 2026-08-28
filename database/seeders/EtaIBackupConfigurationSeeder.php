@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Helpers\PhoneFormatHelper;
 use App\Helpers\RandomHelper;
 use App\Models\BackupConnection;
 use App\Models\Client;
+use App\Models\Domain;
 use App\Models\FileType;
 use App\Models\Project;
 use App\Models\StoredFile;
@@ -26,11 +28,39 @@ class EtaIBackupConfigurationSeeder extends Seeder
             'legal_name' => 'Instituto Agropecuario Costarricense S.A.',
             'status' => 'active',
             'email' => 'info@casc.ed.cr',
-            'phone' => '2475-6622',
+            'phone' => PhoneFormatHelper::normalize('2475 6622'),
             'website' => 'https://www.casc.ed.cr/casc/',
         ])->save();
 
         $this->seedClientLogo($client);
+
+        Domain::query()->updateOrCreate(
+            [
+                'client_id' => $client->id,
+                'name' => 'iacsa.app',
+            ],
+            [
+                'hosting_provider' => 'Namecheap',
+                'annual_cost' => 22.98,
+                'currency' => 'USD',
+                'expires_at' => '2026-11-26',
+                'renewal_period_years' => 1,
+            ],
+        );
+
+        Domain::query()->updateOrCreate(
+            [
+                'client_id' => $client->id,
+                'name' => 'aulavirtual.co.cr',
+            ],
+            [
+                'hosting_provider' => 'Dominios CR',
+                'annual_cost' => 28.25,
+                'currency' => 'USD',
+                'expires_at' => '2026-09-16',
+                'renewal_period_years' => 1,
+            ],
+        );
 
         $project = $this->createProject($client, 'Metai - Etai', 'Gestor estudiantil');
 

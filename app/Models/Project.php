@@ -47,4 +47,10 @@ class Project extends Model
     {
         return $this->hasMany(DatabaseBackup::class);
     }
+
+    /** @return HasMany<ProjectCredential, $this> */
+    public function credentials(): HasMany
+    {
+        return $this->hasMany(ProjectCredential::class);
+    }
 }

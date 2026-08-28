@@ -2,6 +2,7 @@
 
 use App\Models\BackupConnection;
 use App\Models\Client;
+use App\Models\Domain;
 use App\Models\Project;
 use App\Models\StoredFile;
 use Database\Seeders\EtaIBackupConfigurationSeeder;
@@ -23,7 +24,7 @@ it('seeds the ETAI project and its backup connection', function () {
 
     expect($client->name)->toBe('Instituto Agropecuario Costarricense S.A.')
         ->and($client->email)->toBe('info@casc.ed.cr')
-        ->and($client->phone)->toBe('2475-6622')
+        ->and($client->phone)->toBe('2475 6622')
         ->and($client->website)->toBe('https://www.casc.ed.cr/casc/')
         ->and($project->code)->toMatch('/^PROJ-[A-Z0-9]{7}$/')
         ->and($project->description)->toBe('Gestor estudiantil')
@@ -41,6 +42,28 @@ it('seeds the ETAI project and its backup connection', function () {
         ->and($storedFile->path)->toBe($client->image_path)
         ->and($storedFile->width)->toBe(217)
         ->and($storedFile->height)->toBe(256);
+});
+
+it('seeds the IACSA domain details', function () {
+    $this->seed(EtaIBackupConfigurationSeeder::class);
+
+    $client = Client::query()->where('tax_id', '3101007178')->firstOrFail();
+    $domain = Domain::query()->whereBelongsTo($client)->where('name', 'iacsa.app')->firstOrFail();
+
+    expect($domain->hosting_provider)->toBe('Namecheap')
+        ->and((string) $domain->annual_cost)->toBe('22.98')
+        ->and($domain->currency)->toBe('USD')
+        ->and($domain->expires_at->format('Y-m-d'))->toBe('2026-11-26')
+        ->and($domain->renewal_period_years)->toBe(1);
+
+    $virtualClassroomDomain = Domain::query()->whereBelongsTo($client)->where('name', 'aulavirtual.co.cr')->firstOrFail();
+
+    expect($virtualClassroomDomain->hosting_provider)->toBe('Dominios CR')
+        ->and((string) $virtualClassroomDomain->annual_cost)->toBe('28.25')
+        ->and($virtualClassroomDomain->currency)->toBe('USD')
+        ->and($virtualClassroomDomain->expires_at->format('Y-m-d'))->toBe('2026-09-16')
+        ->and($virtualClassroomDomain->renewal_period_years)->toBe(1)
+        ->and($virtualClassroomDomain->isHostedAtDonDominio())->toBeFalse();
 });
 
 it('seeds the CASC project with its own backup connection', function () {

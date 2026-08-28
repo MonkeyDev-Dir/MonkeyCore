@@ -7,7 +7,7 @@ use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class ClientProjects extends Component
+class ClientDomains extends Component
 {
     public string $clientCode;
 
@@ -16,15 +16,12 @@ class ClientProjects extends Component
         $this->clientCode = $clientCode;
     }
 
-    #[On('project-saved')]
-    public function refreshProjects(): void {}
-
-    #[On('project-credential-saved')]
-    public function refreshCredentials(): void {}
+    #[On('domain-saved')]
+    public function refreshDomains(): void {}
 
     public function render(ClientService $clientService): View
     {
-        return view('livewire.clients.client-projects', [
+        return view('livewire.clients.client-domains', [
             'client' => $clientService->findByCodeOrFail($this->clientCode),
         ]);
     }

@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Helpers\PhoneFormatHelper;
 use App\Helpers\RandomHelper;
 use App\Models\BackupConnection;
 use App\Models\Client;
+use App\Models\Domain;
 use App\Models\FileType;
 use App\Models\Project;
+use App\Models\ProjectCredential;
 use App\Models\StoredFile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -74,7 +77,7 @@ class ClientService
 
     public function findByCodeOrFail(string $clientCode): Client
     {
-        return Client::query()->with(['contacts', 'addresses', 'projects', 'backupConnections.project'])->where('code', $clientCode)->firstOrFail();
+        return Client::query()->with(['contacts', 'addresses', 'projects.credentials', 'backupConnections.project', 'domains'])->where('code', $clientCode)->firstOrFail();
     }
 
     /** @param array<string, mixed> $attributes */
@@ -90,6 +93,23 @@ class ClientService
         $project->save();
 
         return $project->refresh();
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function saveProjectCredential(Project $project, array $attributes, ?ProjectCredential $credential = null): ProjectCredential
+    {
+        if ($credential !== null) {
+            $credential->update($attributes);
+
+            return $credential->refresh();
+        }
+
+        return $project->credentials()->create($attributes);
+    }
+
+    public function findProjectCredentialOrFail(Project $project, int $credentialId): ProjectCredential
+    {
+        return $project->credentials()->findOrFail($credentialId);
     }
 
     /** @param array<string, mixed> $attributes */
@@ -109,6 +129,23 @@ class ClientService
         return $client->backupConnections()->findOrFail($connectionId);
     }
 
+    /** @param array<string, mixed> $attributes */
+    public function saveDomain(Client $client, array $attributes, ?Domain $domain = null): Domain
+    {
+        if ($domain !== null) {
+            $domain->update($attributes);
+
+            return $domain->refresh();
+        }
+
+        return $client->domains()->create($attributes);
+    }
+
+    public function findDomainOrFail(Client $client, int $domainId): Domain
+    {
+        return $client->domains()->findOrFail($domainId);
+    }
+
     public function updateLogo(Client $client, UploadedFile $image): Client
     {
         return $this->save([], $client, $image);
@@ -117,6 +154,13 @@ class ClientService
     /** @param array<string, mixed> $attributes */
     public function save(array $attributes, ?Client $client = null, ?UploadedFile $image = null): Client
     {
+        $attributes['phone'] = PhoneFormatHelper::normalize($attributes['phone'] ?? null);
+
+        if (isset($attributes['contact']) && is_array($attributes['contact'])) {
+            $attributes['contact']['phone'] = PhoneFormatHelper::normalize($attributes['contact']['phone'] ?? null);
+            $attributes['contact']['mobile_phone'] = PhoneFormatHelper::normalize($attributes['contact']['mobile_phone'] ?? null);
+        }
+
         $uploadedImage = $image === null ? null : $this->uploadImage($image);
         $oldImagePath = $client?->image_path;
         $oldStoredFile = $client?->storedFiles()
