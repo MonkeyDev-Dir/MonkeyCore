@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\V1\Consumers;
 
+use App\Http\Controllers\Controller;
 use App\Services\ApifyCrService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -12,7 +12,7 @@ class CostaRicaPeopleController extends Controller
 {
     public function __construct(private ApifyCrService $apifyCrService) {}
 
-    public function show(Request $request, string $cedula): JsonResponse
+    public function show(string $cedula): JsonResponse
     {
         if (! preg_match('/^\d{9}$/', $cedula)) {
             throw ValidationException::withMessages([

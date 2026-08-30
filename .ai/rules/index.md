@@ -6,6 +6,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | --- | --- |
 | app/**, routes/**, config/**, database/** | .ai/rules/backend-packages.md |
 | resources/css/** | .ai/rules/css.md |
+| app/Http/** | .ai/rules/http.md |
 | public/images/** | .ai/rules/images.md |
 | resources/js/** | .ai/rules/js.md |
 | app/Livewire/** | .ai/rules/livewire.md |

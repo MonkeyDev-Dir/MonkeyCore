@@ -22,6 +22,17 @@ class MenuHelper
                 'name' => __('Respaldos'),
                 'path' => '/backups',
             ],
+            [
+                'icon' => 'apis',
+                'name' => __('APIS'),
+                'path' => '/apis',
+                'subItems' => [
+                    [
+                        'name' => __('Tipo de cambio'),
+                        'path' => '/apis/exchange-rates',
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -32,6 +43,17 @@ class MenuHelper
                 'icon' => 'user-profile',
                 'name' => __('Usuarios'),
                 'path' => '/users',
+            ],
+            [
+                'icon' => 'integrations',
+                'name' => __('Integraciones'),
+                'path' => '/integrations',
+                'exact' => true,
+            ],
+            [
+                'icon' => 'api',
+                'name' => __('API Tokens'),
+                'path' => '/integrations/api-consumers',
             ],
         ];
     }
@@ -50,9 +72,14 @@ class MenuHelper
         ];
     }
 
-    public static function isActive(string $path): bool
+    public static function isActive(string $path, bool $exact = false): bool
     {
-        return request()->is(ltrim($path, '/'));
+        $currentPath = trim(request()->path(), '/');
+        $menuPath = trim($path, '/');
+
+        return $exact
+            ? $currentPath === $menuPath
+            : $currentPath === $menuPath || str_starts_with($currentPath, $menuPath.'/');
     }
 
     public static function getIconSvg(string $iconName): string
@@ -74,6 +101,9 @@ class MenuHelper
             'chat' => 'message-circle',
             'support-ticket' => 'headset',
             'email' => 'mail',
+            'integrations' => 'plug-zap',
+            'api' => 'key-round',
+            'apis' => 'brackets',
         ];
 
         if (isset($lucideIcons[$iconName])) {

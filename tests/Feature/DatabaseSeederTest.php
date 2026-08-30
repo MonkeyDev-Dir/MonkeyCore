@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ApiConsumer;
 use App\Models\BackupConnection;
 use App\Models\Client;
 use App\Models\Domain;
@@ -31,7 +32,11 @@ it('seeds the initial user and demo users', function () {
         ->and(BackupConnection::where('name', 'CASC Backup Config')->count())->toBe(1)
         ->and(BackupConnection::where('name', 'Portal Backup Config')->count())->toBe(1)
         ->and(User::where('email', 'me@gilberthrojas.com')->exists())->toBeTrue()
-        ->and(User::whereNotNull('avatar_path')->count())->toBe(11);
+        ->and(User::whereNotNull('avatar_path')->count())->toBe(11)
+        ->and(ApiConsumer::query()->where('name', 'Postman')->count())->toBe(1)
+        ->and(ApiConsumer::query()->where('name', 'Postman')->value('description'))->toBe('Llave para pruebas con Postman')
+        ->and(ApiConsumer::query()->where('name', 'Postman')->value('active'))->toBeTrue()
+        ->and(ApiConsumer::query()->where('name', 'Postman')->firstOrFail()->tokens()->count())->toBe(0);
 
     $domain = Domain::query()->where('name', 'gymcr.co.cr')->firstOrFail();
 

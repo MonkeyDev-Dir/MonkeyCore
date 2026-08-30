@@ -139,6 +139,8 @@
     @endif
 
     @stack('scripts')
+    <x-toast />
+    <x-dialog />
     @livewireScriptConfig
 </body>
 

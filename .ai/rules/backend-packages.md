@@ -26,3 +26,6 @@ Usa el AWS SDK oficial para integraciones AWS y la abstracción `Storage` de Lar
 
 ## Rutas delegan en controllers
 Toda ruta debe apuntar a un método de un controller. No usar closures ni lógica de aplicación directamente en los archivos de rutas.
+
+## Organización de rutas por audiencia y versión
+Organiza las rutas web en archivos públicos y privados, y las APIs bajo api/v1 separadas en public, consumers, internal y webhooks. Versiona las APIs y carga los subarchivos desde los archivos principales routes/web.php y routes/api.php.

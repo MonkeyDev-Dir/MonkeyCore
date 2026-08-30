@@ -14,4 +14,10 @@ return [
         'max_files' => 30,
     ],
 
+    'bccr' => [
+        'path' => storage_path('logs/request/bccr.log'),
+        'level' => 'debug',
+        'max_files' => 30,
+    ],
+
 ];

@@ -1,0 +1,83 @@
+.app-confirmation {
+    width: min(28rem, calc(100% - 2rem)) !important;
+    border: 1px solid var(--color-gray-200) !important;
+    border-radius: 1rem !important;
+    background: var(--color-white) !important;
+    padding: 1.5rem !important;
+    box-shadow: var(--shadow-theme-xl) !important;
+}
+
+.app-confirmation-title {
+    margin: 0.75rem 0 0 !important;
+    color: var(--color-gray-800) !important;
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    line-height: 1.75rem !important;
+}
+
+.app-confirmation-text {
+    margin: 0.5rem 0 0 !important;
+    color: var(--color-gray-500) !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+}
+
+.app-confirmation-icon {
+    margin: 0 auto !important;
+}
+
+.app-confirmation-actions {
+    gap: 0.75rem !important;
+    margin: 1.5rem 0 0 !important;
+}
+
+.app-confirmation-confirm,
+.app-confirmation-cancel {
+    min-width: 7rem !important;
+    border: 0 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    line-height: 1.25rem !important;
+}
+
+.app-confirmation-confirm {
+    background: var(--color-red-600) !important;
+    color: var(--color-white) !important;
+}
+
+.app-confirmation-confirm:hover {
+    background: var(--color-red-700) !important;
+}
+
+.app-confirmation-cancel {
+    background: var(--color-gray-100) !important;
+    color: var(--color-gray-700) !important;
+}
+
+.app-confirmation-cancel:hover {
+    background: var(--color-gray-200) !important;
+}
+
+.dark .app-confirmation {
+    border-color: var(--color-gray-800) !important;
+    background: var(--color-gray-900) !important;
+}
+
+.dark .app-confirmation-title {
+    color: var(--color-white) !important;
+}
+
+.dark .app-confirmation-text {
+    color: var(--color-gray-400) !important;
+}
+
+.dark .app-confirmation-cancel {
+    background: var(--color-gray-800) !important;
+    color: var(--color-gray-200) !important;
+}
+
+.dark .app-confirmation-cancel:hover {
+    background: var(--color-gray-700) !important;
+}

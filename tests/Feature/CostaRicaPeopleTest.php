@@ -4,6 +4,11 @@ use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
+function createPeopleApiToken(User $user): string
+{
+    return $user->createToken('ecommerce-people-test', ['people:read'])->plainTextToken;
+}
+
 it('consults a person in Costa Rica through ApifyCR', function () {
     config()->set('services.apifycr.api_key', 'test-api-key');
 
@@ -21,8 +26,8 @@ it('consults a person in Costa Rica through ApifyCR', function () {
 
     $user = User::factory()->create();
 
-    $this->actingAs($user)
-        ->getJson(route('api.people.show', '123456789'))
+    $this->withToken(createPeopleApiToken($user))
+        ->getJson(route('api.v1.people.show', '123456789'))
         ->assertOk()
         ->assertJsonPath('data.cedula', '123456789')
         ->assertJsonPath('data.nombre', 'JUAN');
@@ -57,23 +62,23 @@ it('accepts a direct person response from ApifyCR', function () {
 
     $user = User::factory()->create();
 
-    $this->actingAs($user)
-        ->getJson(route('api.people.show', '123456789'))
+    $this->withToken(createPeopleApiToken($user))
+        ->getJson(route('api.v1.people.show', '123456789'))
         ->assertOk()
         ->assertJsonPath('data.cedula', '123456789')
         ->assertJsonPath('data.apellido1', 'PEREZ');
 });
 
 it('does not allow guests to consult Costa Rica people data', function () {
-    $this->getJson(route('api.people.show', '123456789'))
+    $this->getJson(route('api.v1.people.show', '123456789'))
         ->assertUnauthorized();
 });
 
 it('rejects malformed Costa Rica identity numbers', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)
-        ->getJson('/api/people/123')
+    $this->withToken(createPeopleApiToken($user))
+        ->getJson('/api/v1/people/123')
         ->assertUnprocessable()
         ->assertJsonValidationErrors('cedula');
 });

@@ -50,4 +50,17 @@ return [
         'timeout' => (int) env('GEMINI_TIMEOUT', 30),
     ],
 
+    'bccr' => [
+        'base_url' => env('BCCR_BASE_URL', 'https://apim.bccr.fi.cr/SDDE/api/Bccr.Ge.SDDE.Publico.Indicadores.API'),
+        'token' => env('BCCR_TOKEN'),
+        'timezone' => env('BCCR_TIMEZONE', 'America/Costa_Rica'),
+        'timeout' => (int) env('BCCR_TIMEOUT', 10),
+        'connect_timeout' => (int) env('BCCR_CONNECT_TIMEOUT', 5),
+        'indicators' => [
+            'dollar_buy' => 317,
+            'dollar_sell' => 318,
+            'euro' => 333,
+        ],
+    ],
+
 ];

@@ -91,6 +91,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'bccr' => [
+            'driver' => 'daily',
+            'path' => $requestLogs['bccr']['path'],
+            'level' => $requestLogs['bccr']['level'],
+            'max_files' => $requestLogs['bccr']['max_files'],
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

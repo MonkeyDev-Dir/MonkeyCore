@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.3",
         "aws/aws-sdk-php": "^3.394",
+        "dedoc/scramble": "^0.13.42",
         "dicebear/core": "^10.6",
         "dicebear/styles": "^10.5",
         "intervention/image-laravel": "^4.1",

@@ -38,11 +38,11 @@
             const key = groupIndex + '-' + itemIndex;
             return this.openSubmenus[key] || false;
         },
-        isActive(path) {
+        isActive(path, exact = false) {
             const normalizedPath = path.replace(/^\/+|\/+$/g, '');
             const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
 
-            return currentPath === normalizedPath ||
+            return exact ? currentPath === normalizedPath : currentPath === normalizedPath ||
                 (normalizedPath !== '' && currentPath.startsWith(`${normalizedPath}/`));
         }
     }"
@@ -162,7 +162,7 @@
                                         <!-- Simple Menu Item -->
                                         <a href="{{ $item['path'] }}" class="menu-item group"
                                             :class="[
-                                                isActive('{{ $item['path'] }}') ? 'sidebar-menu-active text-brand-700 dark:text-brand-300' :
+                                                isActive('{{ $item['path'] }}', {{ !empty($item['exact']) ? 'true' : 'false' }}) ? 'sidebar-menu-active text-brand-700 dark:text-brand-300' :
                                                 'menu-item-inactive sidebar-menu-hover',
                                                 (!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ?
                                                 'xl:justify-center' :
@@ -171,7 +171,7 @@
 
                                             <!-- Icon -->
                                             <span class="menu-item-icon"
-                                                :class="isActive('{{ $item['path'] }}') ? 'text-brand-600 dark:text-brand-300' :
+                                                :class="isActive('{{ $item['path'] }}', {{ !empty($item['exact']) ? 'true' : 'false' }}) ? 'text-brand-600 dark:text-brand-300' :
                                                     'menu-item-icon-inactive'">
                                                 {!! \App\Helpers\MenuHelper::getIconSvg($item['icon']) !!}
                                             </span>

@@ -53,6 +53,33 @@ it('places backups inside the main menu group', function () {
         ]);
 });
 
+it('places exchange rate documentation inside the APIs submenu', function () {
+    $mainGroup = collect(MenuHelper::getMenuGroups())
+        ->firstWhere('title', 'MENÚ');
+
+    $apis = collect($mainGroup['items'])->firstWhere('name', 'APIS');
+
+    expect($apis['icon'])->toBe('apis')
+        ->and($apis['subItems'])->toContain([
+            'name' => 'Tipo de cambio',
+            'path' => '/apis/exchange-rates',
+        ]);
+});
+
+it('uses different icons for APIs and API tokens', function () {
+    $mainGroup = collect(MenuHelper::getMenuGroups())
+        ->firstWhere('title', 'MENÚ');
+    $systemGroup = collect(MenuHelper::getMenuGroups())
+        ->firstWhere('title', 'Sistema');
+
+    $apis = collect($mainGroup['items'])->firstWhere('name', 'APIS');
+    $tokens = collect($systemGroup['items'])->firstWhere('name', 'API Tokens');
+
+    expect($apis['icon'])->not->toBe($tokens['icon'])
+        ->and(MenuHelper::getIconSvg($apis['icon']))->toContain('data-lucide="brackets"')
+        ->and(MenuHelper::getIconSvg($tokens['icon']))->toContain('data-lucide="key-round"');
+});
+
 it('does not include template navigation items', function () {
     $itemNames = collect(MenuHelper::getMenuGroups())
         ->pluck('items')

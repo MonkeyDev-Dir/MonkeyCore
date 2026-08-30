@@ -3,8 +3,13 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Dedoc\Scramble\Scramble;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use TallStackUi\Facades\TallStackUi;
@@ -16,7 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        Scramble::configure()->expose(
+            document: fn (Router $router, $action) => $router
+                ->get('docs/api.json', $action)
+                ->name('scramble.docs.document'),
+        );
     }
 
     /**
@@ -25,6 +34,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        RateLimiter::for('api-public', function (Request $request): Limit {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
+        RateLimiter::for('api-consumers', function (Request $request): Limit {
+            return Limit::perMinute(120)->by(
+                $request->user()?->currentAccessToken()?->getKey() ?? $request->ip(),
+            );
+        });
 
         TallStackUi::customize()
             ->table()
