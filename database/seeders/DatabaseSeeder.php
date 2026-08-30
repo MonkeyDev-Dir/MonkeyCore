@@ -16,7 +16,6 @@ class DatabaseSeeder extends Seeder
             BackupDatabaseTypeSeeder::class,
             ClientSeeder::class,
             EtaIBackupConfigurationSeeder::class,
-            ClientBackupsSeeder::class,
             UserSeeder::class,
             ApiConsumerSeeder::class,
         ]);

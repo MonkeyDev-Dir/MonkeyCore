@@ -13,24 +13,22 @@ class UserSeeder extends Seeder
 
     public function run(AvatarService $avatarService): void
     {
-        $robotAvatarState = fn (): array => [
-            'avatar_path' => $avatarService->generateRobotAvatar(),
-        ];
+        $adminEmail = 'me@gilberthrojas.com';
 
-        User::factory()
-            ->state($robotAvatarState)
-            ->create([
+        User::query()
+            ->where('email', '!=', $adminEmail)
+            ->delete();
+
+        User::query()->updateOrCreate(
+            ['email' => $adminEmail],
+            [
                 'name' => 'Gilberth',
                 'lastname' => 'Rojas Alfaro',
                 'ide' => '113420689',
-                'email' => 'me@gilberthrojas.com',
                 'email_verified_at' => now(),
                 'password' => 'Monkey#1',
-            ]);
-
-        User::factory()
-            ->count(10)
-            ->state($robotAvatarState)
-            ->create();
+                'avatar_path' => $avatarService->generateRobotAvatar(),
+            ],
+        );
     }
 }

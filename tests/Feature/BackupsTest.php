@@ -6,8 +6,6 @@ use App\Models\Client;
 use App\Models\DatabaseBackup;
 use App\Models\User;
 use App\Services\DatabaseBackupService;
-use Database\Seeders\ClientBackupsSeeder;
-use Database\Seeders\ClientSeeder;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -30,14 +28,18 @@ it('lists private database backups stored in s3', function () {
         ->assertDontSee('ignore.txt');
 });
 
-it('lists processed database backups seeded for the test client', function () {
-    $this->seed(ClientSeeder::class);
-    $this->seed(ClientBackupsSeeder::class);
+it('lists processed database backups for a client', function () {
+    $client = Client::factory()->create(['name' => 'Cliente respaldado']);
+    $connection = BackupConnection::factory()->for($client)->create();
+    DatabaseBackup::factory()->for($client)->for($connection, 'backupConnection')->create([
+        'filename' => 'backup-processed.backup',
+        'status' => 'completed',
+    ]);
 
     $this->actingAs(User::factory()->create())
         ->get(route('backups.index'))
-        ->assertSee('demo-client-backup-week-')
-        ->assertSee('Cliente de prueba')
+        ->assertSee('backup-processed.backup')
+        ->assertSee('Cliente respaldado')
         ->assertSee('PostgreSQL')
         ->assertSee('.backup')
         ->assertDontSee('Procesado');

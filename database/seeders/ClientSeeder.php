@@ -15,17 +15,12 @@ class ClientSeeder extends Seeder
 {
     public function run(): void
     {
-        $client = Client::query()->firstOrNew(['code' => '512122']);
-
-        if (! $client->exists) {
-            $client->fill([
-                'type' => 'company',
-                'name' => 'Cliente de prueba',
-                'status' => 'active',
-            ]);
-            $client->code = '512122';
-            $client->save();
-        }
+        Client::withTrashed()
+            ->where('code', '512122')
+            ->get()
+            ->each(function (Client $client): void {
+                $client->forceDelete();
+            });
 
         $granitosYMarmoles = Client::query()->firstOrNew(['tax_id' => '3101796338']);
 

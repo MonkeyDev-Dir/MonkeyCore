@@ -14,14 +14,14 @@ use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
-it('seeds the initial user and demo users', function () {
+it('seeds the initial user and configured clients', function () {
     Storage::fake('public');
 
     $this->seed(DatabaseSeeder::class);
 
-    expect(User::count())->toBe(11)
-        ->and(Client::count())->toBe(3)
-        ->and(Client::query()->pluck('code')->unique())->toHaveCount(3)
+    expect(User::count())->toBe(1)
+        ->and(Client::count())->toBe(2)
+        ->and(Client::query()->pluck('code')->unique())->toHaveCount(2)
         ->and(Client::query()->where('tax_id', '3101796338')->value('name'))->toBe('Granitos y Mármoles CR')
         ->and(Client::query()->where('tax_id', '3101796338')->value('phone'))->toBe('8562 6443')
         ->and(Client::query()->where('tax_id', '3101796338')->value('website'))->toBe('https://gymcr.co.cr/')
@@ -32,7 +32,7 @@ it('seeds the initial user and demo users', function () {
         ->and(BackupConnection::where('name', 'CASC Backup Config')->count())->toBe(1)
         ->and(BackupConnection::where('name', 'Portal Backup Config')->count())->toBe(1)
         ->and(User::where('email', 'me@gilberthrojas.com')->exists())->toBeTrue()
-        ->and(User::whereNotNull('avatar_path')->count())->toBe(11)
+        ->and(User::whereNotNull('avatar_path')->count())->toBe(1)
         ->and(ApiConsumer::query()->where('name', 'Postman')->count())->toBe(1)
         ->and(ApiConsumer::query()->where('name', 'Postman')->value('description'))->toBe('Llave para pruebas con Postman')
         ->and(ApiConsumer::query()->where('name', 'Postman')->value('active'))->toBeTrue()

@@ -1,31 +1,44 @@
 <?php
 
+use App\Models\BackupConnection;
 use App\Models\Client;
 use App\Models\DatabaseBackup;
-use Database\Seeders\ClientBackupsSeeder;
+use App\Models\User;
 use Database\Seeders\ClientSeeder;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\FileTypeSeeder;
+use Database\Seeders\UserSeeder;
 
-it('seeds only the test and ETAI clients', function () {
+it('seeds only configured clients and no demo backups', function () {
     $this->seed(DatabaseSeeder::class);
 
     expect(Client::query()->count())->toBe(2)
-        ->and(Client::query()->where('code', '512122')->exists())->toBeTrue()
+        ->and(Client::query()->where('name', 'Cliente de prueba')->exists())->toBeFalse()
         ->and(Client::query()->where('tax_id', '3101007178')->exists())->toBeTrue();
+
+    expect(DatabaseBackup::query()->where('filename', 'like', 'demo-client-backup-%')->exists())->toBeFalse();
 });
 
-it('seeds repeatable database-only backups for the profile client', function () {
+it('removes the legacy test client and its backups', function () {
+    $this->seed(FileTypeSeeder::class);
+
+    $client = Client::factory()->create(['code' => '512122']);
+    $connection = BackupConnection::factory()->for($client)->create();
+    DatabaseBackup::factory()->for($client)->for($connection, 'backupConnection')->create([
+        'filename' => 'demo-client-backup-legacy.backup',
+    ]);
+
     $this->seed(ClientSeeder::class);
-    $this->seed(ClientBackupsSeeder::class);
 
-    $client = Client::query()->where('code', '512122')->firstOrFail();
-    $backupCount = DatabaseBackup::query()->where('client_id', $client->id)->count();
+    expect(Client::withTrashed()->where('code', '512122')->exists())->toBeFalse()
+        ->and(DatabaseBackup::query()->where('filename', 'demo-client-backup-legacy.backup')->exists())->toBeFalse();
+});
 
-    expect($backupCount)->toBeGreaterThan(50)
-        ->and(DatabaseBackup::query()->where('client_id', $client->id)->where('filename', 'like', 'demo-client-backup-%')->count())
-        ->toBe($backupCount);
+it('keeps only the administrative user when seeded', function () {
+    User::factory()->count(3)->create();
 
-    $this->seed(ClientBackupsSeeder::class);
+    $this->seed(UserSeeder::class);
 
-    expect(DatabaseBackup::query()->where('client_id', $client->id)->count())->toBe($backupCount);
+    expect(User::query()->count())->toBe(1)
+        ->and(User::query()->value('email'))->toBe('me@gilberthrojas.com');
 });

@@ -14,7 +14,9 @@ it('logs the complete backup process when there are no active connections', func
         ->expectsOutput('Respaldos fallidos: 0')
         ->assertSuccessful();
 
-    $logPath = glob(storage_path('logs/request/backups-*.log'))[0] ?? null;
+    $logPath = collect(glob(storage_path('logs/request/backups-*.log')))
+        ->sortByDesc(fn (string $path): int => (int) filemtime($path))
+        ->first();
 
     expect($logPath)->not->toBeNull();
     expect(file_get_contents($logPath))
