@@ -95,6 +95,47 @@ class DatabaseBackupService
         return $summary;
     }
 
+    public function queueForConnection(BackupConnection $connection): DatabaseBackup
+    {
+        $backup = DatabaseBackup::query()->create([
+            'client_id' => $connection->client_id,
+            'project_id' => $connection->project_id,
+            'backup_connection_id' => $connection->id,
+            'execution_id' => (string) Str::uuid(),
+            'disk' => $this->disk(),
+            'status' => 'queued',
+            'metadata' => ['queued_at' => now()->toIso8601String()],
+        ]);
+
+        try {
+            ProcessDatabaseBackup::dispatch($backup->id);
+        } catch (\Throwable $exception) {
+            $backup->update([
+                'status' => 'failed',
+                'completed_at' => now(),
+                'error_message' => Str::limit($exception->getMessage(), 2000),
+                'error_output' => Str::limit($exception->getMessage(), 10000),
+                'metadata' => [
+                    'exception' => $exception::class,
+                    'phase' => 'dispatch',
+                ],
+            ]);
+
+            Log::channel('backups')->error('Job de respaldo no pudo ser encolado', [
+                'backup_id' => $backup->id,
+                'backup_connection_id' => $connection->id,
+                'exception' => $exception::class,
+                'error' => $exception->getMessage(),
+            ]);
+
+            report($exception);
+
+            throw $exception;
+        }
+
+        return $backup;
+    }
+
     public function createForConnection(BackupConnection $connection, ?DatabaseBackup $backup = null): DatabaseBackup
     {
         $startedAt = microtime(true);

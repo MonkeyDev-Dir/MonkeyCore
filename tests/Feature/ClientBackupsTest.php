@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\ProcessDatabaseBackup;
 use App\Livewire\Clients\BackupConnectionModal;
 use App\Livewire\Clients\ClientAnnualBackups;
 use App\Livewire\Clients\ClientBackups;
@@ -12,6 +13,7 @@ use App\Models\DatabaseBackup;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\DatabaseBackupService;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -189,6 +191,41 @@ it('renders backup connections as edit actions', function () {
     Livewire::test(ClientBackups::class, ['clientCode' => $client->code])
         ->assertSee('open-backup-connection-edit', false)
         ->assertSee((string) $connection->id, false);
+});
+
+it('queues a manual backup for a client connection', function () {
+    Queue::fake();
+    $client = Client::factory()->create();
+    $connection = BackupConnection::factory()->create(['client_id' => $client->id]);
+
+    Livewire::test(ClientBackups::class, ['clientCode' => $client->code])
+        ->call('queueBackup', $connection->id)
+        ->assertDispatched('backup-queued');
+
+    $backup = DatabaseBackup::query()->firstOrFail();
+
+    expect($backup->backup_connection_id)->toBe($connection->id)
+        ->and($backup->status)->toBe('queued');
+
+    Queue::assertPushed(ProcessDatabaseBackup::class, fn (ProcessDatabaseBackup $job): bool => $job->backupId === $backup->id);
+});
+
+it('does not queue a second manual backup while one is in progress', function () {
+    Queue::fake();
+    $client = Client::factory()->create();
+    $connection = BackupConnection::factory()->create(['client_id' => $client->id]);
+    DatabaseBackup::factory()->create([
+        'client_id' => $client->id,
+        'backup_connection_id' => $connection->id,
+        'status' => 'running',
+    ]);
+
+    Livewire::test(ClientBackups::class, ['clientCode' => $client->code])
+        ->call('queueBackup', $connection->id)
+        ->assertDispatched('backup-queue-warning');
+
+    expect(DatabaseBackup::query()->count())->toBe(1);
+    Queue::assertNothingPushed();
 });
 
 it('shows only the five latest backups for each day', function () {

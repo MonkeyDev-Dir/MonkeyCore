@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="space-y-6" x-data x-on:backup-queued.window="Toast.fire({ icon: 'success', title: $event.detail.message })" x-on:backup-queue-warning.window="Toast.fire({ icon: 'warning', title: $event.detail.message })" x-on:backup-queue-failed.window="Toast.fire({ icon: 'error', title: $event.detail.message })">
     <div class="rounded-xl border border-gray-200 bg-gray-100/80 p-5 dark:border-gray-800 dark:bg-gray-900/40">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -12,7 +12,19 @@
         @else
             <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                 @foreach($client->backupConnections as $connection)
-                    <button type="button" wire:key="backup-connection-{{ $connection->id }}" x-data x-on:click="window.dispatchEvent(new CustomEvent('open-backup-connection-edit', { detail: { clientCode: '{{ $clientCode }}', connectionId: {{ $connection->id }} } }))" class="w-full rounded-lg border border-gray-200 bg-white p-3 text-left transition hover:border-brand-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-brand-500"><div class="flex items-center justify-between gap-3"><span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $connection->name }}</span><span @class(['inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400' => $connection->is_active, 'border-gray-200 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400' => ! $connection->is_active])>{{ __($connection->is_active ? 'Activa' : 'Inactiva') }}</span></div><p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $connection->project?->name ?? __('Todos los proyectos') }} · {{ $connection->ssh_host }}</p></button>
+                    <div wire:key="backup-connection-{{ $connection->id }}" class="rounded-lg border border-gray-200 bg-white p-3 transition hover:border-brand-400 hover:shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:hover:border-brand-500">
+                        <button type="button" x-data x-on:click="window.dispatchEvent(new CustomEvent('open-backup-connection-edit', { detail: { clientCode: '{{ $clientCode }}', connectionId: {{ $connection->id }} } }))" class="w-full text-left focus:outline-none focus:ring-2 focus:ring-brand-500/40">
+                            <div class="flex items-center justify-between gap-3"><span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $connection->name }}</span><span @class(['inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400' => $connection->is_active, 'border-gray-200 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400' => ! $connection->is_active])>{{ __($connection->is_active ? 'Activa' : 'Inactiva') }}</span></div>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $connection->project?->name ?? __('Todos los proyectos') }} · {{ $connection->ssh_host }}</p>
+                        </button>
+                        <div class="mt-3 flex justify-end border-t border-gray-100 pt-3 dark:border-gray-800">
+                            <button type="button" wire:click="queueBackup({{ $connection->id }})" wire:loading.attr="disabled" wire:target="queueBackup({{ $connection->id }})" @disabled(! $connection->is_active) class="inline-flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand-500/30 dark:text-brand-400 dark:hover:bg-brand-500/10" title="{{ __('Ejecutar ahora') }}">
+                                <i data-lucide="play" class="h-4 w-4" aria-hidden="true"></i>
+                                <span wire:loading.remove wire:target="queueBackup({{ $connection->id }})">{{ __('Ejecutar ahora') }}</span>
+                                <span wire:loading wire:target="queueBackup({{ $connection->id }})">{{ __('Encolando...') }}</span>
+                            </button>
+                        </div>
+                    </div>
                 @endforeach
             </div>
         @endif
