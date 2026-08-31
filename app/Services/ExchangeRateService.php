@@ -13,7 +13,7 @@ class ExchangeRateService
 
     public function sync(?CarbonImmutable $date = null): int
     {
-        $date ??= CarbonImmutable::now((string) config('services.bccr.timezone'))->subDay();
+        $date ??= CarbonImmutable::now((string) config('services.bccr.timezone'));
         $rates = $this->bccrExchangeRateService->obtenerTiposDeCambio($date);
 
         return DB::transaction(function () use ($rates): int {

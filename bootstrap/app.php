@@ -26,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ->onOneServer();
 
         $schedule->command('exchange-rates:sync')
-            ->dailyAt('00:30')
+            ->everyFourHours()
             ->timezone(config('services.bccr.timezone'))
             ->withoutOverlapping()
             ->onOneServer();

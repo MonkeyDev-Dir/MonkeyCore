@@ -56,6 +56,20 @@ it('stores the BCCR exchange rates for a date', function () {
     ]);
 });
 
+it('uses the current date when synchronization runs without a date', function () {
+    fakeBccrExchangeRates();
+    $this->travelTo('2026-08-31 18:00:00');
+
+    $this->artisan('exchange-rates:sync')->assertSuccessful();
+
+    Http::assertSent(function (Request $request): bool {
+        $query = $request->toPsrRequest()->getUri()->getQuery();
+
+        return str_contains(urldecode($query), 'fechaInicio=2026/08/31')
+            && str_contains(urldecode($query), 'fechaFin=2026/08/31');
+    });
+});
+
 it('does not duplicate rates when the synchronization is repeated', function () {
     fakeBccrExchangeRates();
 

@@ -42,7 +42,7 @@ class SyncExchangeRatesCommand extends Command
     {
         $date = $this->option('date');
         if ($date === null) {
-            return CarbonImmutable::now()->subDay();
+            return CarbonImmutable::now((string) config('services.bccr.timezone'));
         }
 
         try {
