@@ -32,6 +32,10 @@ return new class extends Migration
             $table->string('mysql_user')->nullable();
             $table->text('mysql_password')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->string('backup_frequency', 20)->nullable();
+            $table->unsignedTinyInteger('backup_daily_retention_months')->nullable();
+            $table->unsignedTinyInteger('backup_monthly_retention_years')->nullable();
+            $table->timestamp('backup_last_run_at')->nullable();
             $table->timestamps();
 
             $table->unique(['client_id', 'name']);

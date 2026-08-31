@@ -2,6 +2,7 @@
 
 use App\Jobs\ProcessDatabaseBackup;
 use App\Livewire\Clients\BackupConnectionModal;
+use App\Livewire\Clients\BackupScheduleModal;
 use App\Livewire\Clients\ClientAnnualBackups;
 use App\Livewire\Clients\ClientBackups;
 use App\Livewire\Clients\ClientMonthlyBackups;
@@ -106,6 +107,27 @@ it('does not allow assigning a project from another client to a backup connectio
         ])
         ->call('save')
         ->assertHasErrors(['projectId']);
+});
+
+it('saves a custom schedule for an individual backup connection', function () {
+    $client = Client::factory()->create();
+    $connection = BackupConnection::factory()->for($client)->create();
+
+    Livewire::test(BackupScheduleModal::class)
+        ->call('open', $client->code, $connection->id)
+        ->fill([
+            'useCustomSchedule' => true,
+            'frequency' => 'weekly',
+            'dailyRetentionMonths' => 2,
+            'monthlyRetentionYears' => 5,
+        ])
+        ->call('save');
+
+    $connection->refresh();
+
+    expect($connection->backup_frequency)->toBe('weekly')
+        ->and($connection->backup_daily_retention_months)->toBe(2)
+        ->and($connection->backup_monthly_retention_years)->toBe(5);
 });
 
 it('creates a MySQL backup connection using its database fields', function () {

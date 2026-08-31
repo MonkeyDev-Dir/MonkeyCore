@@ -13,7 +13,7 @@
             <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                 @foreach($client->backupConnections as $connection)
                     <div wire:key="backup-connection-{{ $connection->id }}" class="rounded-lg border border-gray-200 bg-white p-3 transition hover:border-brand-400 hover:shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:hover:border-brand-500">
-                        <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start justify-between gap-1">
                             <button type="button" x-data x-on:click="window.dispatchEvent(new CustomEvent('open-backup-connection-edit', { detail: { clientCode: '{{ $clientCode }}', connectionId: {{ $connection->id }} } }))" class="min-w-0 flex-1 text-left focus:outline-none focus:ring-2 focus:ring-brand-500/40">
                                 <div class="flex items-center gap-2"><span class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $connection->name }}</span><span @class(['inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-xs font-medium', 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400' => $connection->is_active, 'border-gray-200 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400' => ! $connection->is_active])>{{ __($connection->is_active ? 'Activa' : 'Inactiva') }}</span></div>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $connection->project?->name ?? __('Todos los proyectos') }} · {{ $connection->ssh_host }}</p>
@@ -21,6 +21,9 @@
                             <button type="button" wire:click="queueBackup({{ $connection->id }})" wire:loading.attr="disabled" wire:target="queueBackup({{ $connection->id }})" @disabled(! $connection->is_active) class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-brand-200 text-brand-600 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand-500/30 dark:text-brand-400 dark:hover:bg-brand-500/10" title="{{ __('Ejecutar ahora') }}" aria-label="{{ __('Ejecutar ahora') }}">
                                 <i data-lucide="play" wire:loading.remove wire:target="queueBackup({{ $connection->id }})" class="h-4 w-4" aria-hidden="true"></i>
                                 <i data-lucide="loader-circle" wire:loading wire:target="queueBackup({{ $connection->id }})" class="h-4 w-4 animate-spin" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" x-data x-on:click="window.dispatchEvent(new CustomEvent('open-backup-schedule', { detail: { clientCode: '{{ $clientCode }}', connectionId: {{ $connection->id }} } }))" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]" title="{{ __('Configurar frecuencia') }}" aria-label="{{ __('Configurar frecuencia') }}">
+                                <i data-lucide="settings-2" class="h-4 w-4" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
@@ -45,4 +48,5 @@
         <livewire:clients.client-monthly-backups :client-code="$clientCode" :project-id="$projectId" wire:key="monthly-backups-{{ $clientCode }}-{{ $projectId ?? 'all' }}" />
         <livewire:clients.client-annual-backups :client-code="$clientCode" :project-id="$projectId" wire:key="annual-backups-{{ $clientCode }}-{{ $projectId ?? 'all' }}" />
     @endif
+    <livewire:clients.backup-schedule-modal />
 </div>

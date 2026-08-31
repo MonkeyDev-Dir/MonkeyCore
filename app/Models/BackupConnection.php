@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['client_id', 'project_id', 'name', 'database_type', 'ssh_host', 'ssh_port', 'ssh_user', 'ssh_private_key', 'postgres_host', 'postgres_port', 'postgres_database', 'postgres_user', 'postgres_password', 'mysql_host', 'mysql_port', 'mysql_database', 'mysql_user', 'mysql_password', 'is_active'])]
+#[Fillable(['client_id', 'project_id', 'name', 'database_type', 'ssh_host', 'ssh_port', 'ssh_user', 'ssh_private_key', 'postgres_host', 'postgres_port', 'postgres_database', 'postgres_user', 'postgres_password', 'mysql_host', 'mysql_port', 'mysql_database', 'mysql_user', 'mysql_password', 'is_active', 'backup_frequency', 'backup_daily_retention_months', 'backup_monthly_retention_years', 'backup_last_run_at'])]
 class BackupConnection extends Model
 {
     /** @use HasFactory<BackupConnectionFactory> */
@@ -26,6 +26,9 @@ class BackupConnection extends Model
             'mysql_port' => 'integer',
             'mysql_password' => 'encrypted',
             'is_active' => 'boolean',
+            'backup_daily_retention_months' => 'integer',
+            'backup_monthly_retention_years' => 'integer',
+            'backup_last_run_at' => 'datetime',
         ];
     }
 

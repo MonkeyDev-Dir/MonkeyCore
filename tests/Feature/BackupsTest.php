@@ -96,3 +96,38 @@ it('does not allow downloading a path outside the backup directory', function ()
         ->get(route('backups.download', ['path' => 'other/file.backup']))
         ->assertNotFound();
 });
+
+it('retains recent backups and the latest monthly backup until the configured limit', function () {
+    Storage::fake('s3');
+    $this->travelTo('2026-08-31 12:00:00');
+    $client = Client::factory()->create();
+    $connection = BackupConnection::factory()->for($client)->create();
+
+    $recent = DatabaseBackup::factory()->for($client)->for($connection, 'backupConnection')->create([
+        'path' => 'database-backups/recent.backup',
+        'generated_at' => now()->subDays(10),
+    ]);
+    $monthly = DatabaseBackup::factory()->for($client)->for($connection, 'backupConnection')->create([
+        'path' => 'database-backups/monthly.backup',
+        'generated_at' => now()->subMonths(2)->startOfMonth()->addDays(20),
+    ]);
+    $duplicate = DatabaseBackup::factory()->for($client)->for($connection, 'backupConnection')->create([
+        'path' => 'database-backups/duplicate.backup',
+        'generated_at' => now()->subMonths(2)->startOfMonth()->addDays(5),
+    ]);
+    $expired = DatabaseBackup::factory()->for($client)->for($connection, 'backupConnection')->create([
+        'path' => 'database-backups/expired.backup',
+        'generated_at' => now()->subYears(4),
+    ]);
+    Storage::disk('s3')->put($recent->path, 'recent');
+    Storage::disk('s3')->put($monthly->path, 'monthly');
+    Storage::disk('s3')->put($duplicate->path, 'duplicate');
+    Storage::disk('s3')->put($expired->path, 'expired');
+
+    app(DatabaseBackupService::class)->prune();
+
+    expect(DatabaseBackup::query()->pluck('id')->all())
+        ->toBe([$recent->id, $monthly->id]);
+    Storage::disk('s3')->assertMissing($duplicate->path);
+    Storage::disk('s3')->assertMissing($expired->path);
+});

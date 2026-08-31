@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\BackupSettingsService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,9 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('backups:create')
-            ->hourly()
+            ->everyMinute()
             ->between('05:00', '22:00')
             ->timezone(config('backups.timezone'))
+            ->when(fn (): bool => app(BackupSettingsService::class)->hasDueConnections())
             ->withoutOverlapping()
             ->onOneServer();
 

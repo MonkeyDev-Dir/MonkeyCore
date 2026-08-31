@@ -22,6 +22,8 @@ class DatabaseBackupService
 {
     private const MaxDisplayedBackups = 200;
 
+    public function __construct(private BackupSettingsService $settingsService) {}
+
     /** @return Collection<int, BackupDatabaseType> */
     public function availableDatabaseTypes(): Collection
     {
@@ -47,6 +49,11 @@ class DatabaseBackupService
         BackupConnection::query()
             ->where('is_active', true)
             ->each(function (BackupConnection $connection) use (&$summary): void {
+                if (! $this->settingsService->isDue($connection)) {
+                    return;
+                }
+
+                $this->settingsService->markRun($connection);
                 $backup = DatabaseBackup::query()->create([
                     'client_id' => $connection->client_id,
                     'project_id' => $connection->project_id,
@@ -493,8 +500,9 @@ class DatabaseBackupService
     {
         $now = $this->now();
         $monthlyStart = $now->subMonths(11)->startOfMonth();
+        $settings = $this->settingsService->current();
         $backups = $this->completedBackupsForClient($client, $projectId)
-            ->whereBetween('generated_at', [$now->subYears((int) config('backups.retention.years', 5))->startOfMonth(), $monthlyStart->subSecond()])
+            ->whereBetween('generated_at', [$now->subYears($settings->monthly_retention_years)->startOfMonth(), $monthlyStart->subSecond()])
             ->orderByDesc('generated_at')
             ->get()
             ->groupBy(fn (DatabaseBackup $backup): string => "{$this->localDate($backup)->format('Y-m')}:{$backup->backup_connection_id}")
@@ -522,40 +530,30 @@ class DatabaseBackupService
         $startedAt = microtime(true);
         $disk = Storage::disk($this->disk());
         $now = $this->now();
-        $weekStart = $now->startOfWeek();
-        $monthlyCutoff = $now->subMonths((int) config('backups.retention.months', 12));
-        $annualCutoff = $now->subYears((int) config('backups.retention.years', 5));
-        $latestByWeek = [];
         $latestByMonth = [];
         $deleted = 0;
         $files = DatabaseBackup::query()
             ->where('status', 'completed')
             ->whereNotNull('generated_at')
+            ->with('backupConnection')
             ->orderByDesc('generated_at')
             ->get();
 
         Log::channel('backups')->debug('Limpieza de respaldos iniciada', [
             'files_found' => count($files),
-            'retention_months' => config('backups.retention.months', 12),
+            'retention_scope' => 'per_connection',
         ]);
 
         foreach ($files as $file) {
             $timestamp = $file->generated_at->setTimezone($this->timezone());
 
-            if ($timestamp->greaterThanOrEqualTo($weekStart)) {
-                continue;
-            }
-
             $retentionKey = "{$file->client_id}:{$file->backup_connection_id}";
+            $settings = $this->settingsService->forConnection($file->backupConnection);
+            $monthlyCutoff = $now->subMonths($settings['daily_retention_months']);
+            $annualCutoff = $now->subYears($settings['monthly_retention_years']);
 
             if ($timestamp->greaterThanOrEqualTo($monthlyCutoff)) {
-                $week = "{$retentionKey}:{$timestamp->format('o-W')}";
-
-                if (! isset($latestByWeek[$week])) {
-                    $latestByWeek[$week] = $file->id;
-
-                    continue;
-                }
+                continue;
             }
 
             if ($timestamp->greaterThanOrEqualTo($annualCutoff)) {
