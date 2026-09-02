@@ -978,3 +978,20 @@ pre[class*='language-'] {
     margin-right: -60px !important;
   }
 }
+.page-content-background {
+  position: relative;
+  isolation: isolate;
+}
+
+.page-content-background::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url('/images/layout/bg-monkey-a.webp');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  content: '';
+  opacity: 0.5;
+  pointer-events: none;
+}

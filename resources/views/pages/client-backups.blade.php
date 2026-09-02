@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('Respaldos de :name', ['name' => $client->name]))
+
 @section('content')
     <div class="space-y-6">
         <div>

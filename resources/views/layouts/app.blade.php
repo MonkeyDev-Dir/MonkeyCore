@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Dashboard' }} | TailAdmin - Laravel Tailwind CSS Admin Dashboard Template</title>
+    <title>@yield('title', __('Dashboard')) | {{ config('app.name', 'MonkeyCore') }}</title>
 
     <tallstackui:script />
     @livewireStyles
@@ -116,7 +116,7 @@
         @include('layouts.backdrop')
         <x-sidebar />
 
-        <div class="flex-1 transition-all duration-300 ease-in-out"
+        <div class="page-content-background flex-1 transition-all duration-300 ease-in-out"
             :class="{
                 'xl:ml-[290px]': $store.sidebar.isExpanded || $store.sidebar.isHovered,
                 'xl:ml-[90px]': !$store.sidebar.isExpanded && !$store.sidebar.isHovered,
