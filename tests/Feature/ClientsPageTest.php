@@ -28,7 +28,7 @@ it('shows the clients page to authenticated users', function () {
         ->get(route('clients.index'))
         ->assertOk()
         ->assertViewIs('pages.clients')
-        ->assertSee('<title>Clientes | Laravel</title>', false)
+        ->assertSee('<title>Clientes | Monkey</title>', false)
         ->assertSee(__('Clientes'));
 });
 
