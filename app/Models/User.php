@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -34,6 +35,18 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
+
+    /** @return BelongsToMany<Project, $this> */
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class)->withTimestamps();
+    }
+
+    /** @return BelongsToMany<WorkItem, $this> */
+    public function assignedWorkItems(): BelongsToMany
+    {
+        return $this->belongsToMany(WorkItem::class, 'work_item_user', 'user_id', 'work_item_id')->withTimestamps()->withPivot('assigned_at');
+    }
 
     /** @return HasMany<StoredFile, $this> */
     public function storedFiles(): HasMany

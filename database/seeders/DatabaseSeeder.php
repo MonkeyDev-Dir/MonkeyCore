@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             EtaIBackupConfigurationSeeder::class,
             UserSeeder::class,
             ApiConsumerSeeder::class,
+            WorkItemTypeSeeder::class,
         ]);
     }
 }

@@ -101,3 +101,12 @@ it('returns a Lucide icon for menu icons', function () {
         ->toContain('data-lucide="layout-dashboard"')
         ->not->toContain('<svg');
 });
+
+it('places the work desk above APIs in the main menu group', function () {
+    $mainItems = collect(collect(MenuHelper::getMenuGroups())
+        ->firstWhere('title', 'MENÚ')['items']);
+
+    expect($mainItems->pluck('name')->all())->toContain('Mesa de trabajo')
+        ->and($mainItems->pluck('name')->search('Mesa de trabajo'))
+        ->toBeLessThan($mainItems->pluck('name')->search('APIS'));
+});

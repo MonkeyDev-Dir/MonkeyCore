@@ -23,6 +23,10 @@ class MenuHelper
                 'path' => '/backups',
             ],
             [
+                'icon' => 'support-ticket',
+                'name' => __('Mesa de trabajo'),
+                'path' => '/work-items',
+            ],            [
                 'icon' => 'apis',
                 'name' => __('APIS'),
                 'path' => '/apis',
