@@ -14,6 +14,7 @@ Route::view('/', 'pages.home')->middleware('auth')->name('home');
 Route::get('users', [UsersController::class, 'index'])->middleware('auth')->name('users.index');
 Route::get('clients', [ClientsController::class, 'index'])->middleware('auth')->name('clients.index');
 Route::get('work-items', [WorkItemsController::class, 'index'])->middleware('auth')->name('work-items.index');
+Route::get('work-items/{publicCode}', [WorkItemsController::class, 'show'])->middleware('auth')->name('work-items.show');
 Route::get('clients/{clientCode}/backups', [BackupsController::class, 'client'])->middleware('auth')->name('clients.backups');
 Route::get('clients/{clientCode}', [ClientsController::class, 'show'])->middleware('auth')->name('clients.show');
 Route::get('clients/{clientCode}/backups/{backup}/download', [BackupsController::class, 'downloadClientBackup'])

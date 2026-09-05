@@ -12,7 +12,7 @@ use Database\Seeders\UserSeeder;
 it('seeds only configured clients and no demo backups', function () {
     $this->seed(DatabaseSeeder::class);
 
-    expect(Client::query()->count())->toBe(2)
+    expect(Client::query()->count())->toBe(3)
         ->and(Client::query()->where('name', 'Cliente de prueba')->exists())->toBeFalse()
         ->and(Client::query()->where('tax_id', '3101007178')->exists())->toBeTrue();
 

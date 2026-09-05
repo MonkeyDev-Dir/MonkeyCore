@@ -29,7 +29,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'lastname', 'ide', 'email', 'password', 'avatar_path'])]
+#[Fillable(['name', 'lastname', 'ide', 'email', 'password', 'avatar_path', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -48,6 +48,12 @@ class User extends Authenticatable
         return $this->belongsToMany(WorkItem::class, 'work_item_user', 'user_id', 'work_item_id')->withTimestamps()->withPivot('assigned_at');
     }
 
+    /** @return HasMany<WorkItemFollowUp, $this> */
+    public function workItemFollowUps(): HasMany
+    {
+        return $this->hasMany(WorkItemFollowUp::class);
+    }
+
     /** @return HasMany<StoredFile, $this> */
     public function storedFiles(): HasMany
     {
@@ -64,6 +70,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 

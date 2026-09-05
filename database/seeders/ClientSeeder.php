@@ -65,6 +65,78 @@ class ClientSeeder extends Seeder
 
         $project->description = 'Sitio web desarrollado con Wordpress.';
         $project->save();
+
+        $this->seedMonkeySolutions();
+    }
+
+    private function seedMonkeySolutions(): void
+    {
+        $client = Client::query()->firstOrNew(['tax_id' => '113420689']);
+
+        if (! $client->exists) {
+            $client->code = RandomHelper::generateUniqueDigits(6, 'clients');
+        }
+
+        $client->fill([
+            'type' => 'company',
+            'name' => 'MonkeySolutions',
+            'legal_name' => 'MonkeySolutions',
+            'tax_id' => '113420689',
+            'email' => 'info@monkeysolutions.co',
+            'website' => 'https://monkeysolutions.co',
+            'status' => 'active',
+        ])->save();
+
+        Domain::query()->updateOrCreate(
+            [
+                'client_id' => $client->id,
+                'name' => 'pruebayerror.com',
+            ],
+            [
+                'hosting_provider' => 'DonDominio',
+                'annual_cost' => 18.53,
+                'currency' => 'USD',
+                'expires_at' => '2027-01-14',
+                'renewal_period_years' => 1,
+            ],
+        );
+
+        Domain::query()->updateOrCreate(
+            [
+                'client_id' => $client->id,
+                'name' => 'monkeysolutions.co',
+            ],
+            [
+                'hosting_provider' => 'Namecheap',
+                'annual_cost' => 45.48,
+                'currency' => 'USD',
+                'expires_at' => '2027-08-20',
+                'renewal_period_years' => 1,
+            ],
+        );
+
+        $this->createProject($client, 'Core');
+        Project::query()
+            ->where('client_id', $client->id)
+            ->where('name', 'Página web')
+            ->update(['name' => 'Sitio web']);
+        $this->createProject($client, 'Sitio web');
+    }
+
+    private function createProject(Client $client, string $name): Project
+    {
+        $project = Project::query()->firstOrNew([
+            'client_id' => $client->id,
+            'name' => $name,
+        ]);
+
+        if (! $project->exists || $project->code === null) {
+            $project->code = RandomHelper::generateUniqueAlphanumeric(7, 'projects', 'PROJ');
+        }
+
+        $project->save();
+
+        return $project;
     }
 
     private function seedClientLogo(Client $client): void

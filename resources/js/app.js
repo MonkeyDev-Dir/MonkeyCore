@@ -54,6 +54,7 @@ initializeDatepickers();
 initializeIcons();
 document.addEventListener('livewire:navigated', initializeDatepickers);
 document.addEventListener('livewire:navigated', initializeIcons);
+Livewire.hook('morph.updated', initializeIcons);
 
 window.Alpine = Alpine;
 window.Livewire = Livewire;

@@ -4,26 +4,31 @@ namespace Database\Seeders;
 
 use App\Models\WorkItemType;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class WorkItemTypeSeeder extends Seeder
 {
     public function run(): void
     {
         $types = [
-            'Support' => ['Incident', 'Request', 'Question'],
-            'Integration' => ['Planning', 'Implementation', 'Maintenance'],
-            'Planning' => ['Discovery', 'Definition', 'Estimation'],
-            'Development' => ['Feature', 'Bug', 'Refactor'],
-            'Improvement' => ['Process', 'Performance', 'Experience'],
-            'Investigation' => ['Research', 'Analysis', 'Proof of concept'],
+            'support' => ['name' => 'Soporte', 'categories' => ['incident' => 'Incidente', 'request' => 'Solicitud', 'question' => 'Pregunta']],
+            'integration' => ['name' => 'Integración', 'categories' => ['planning' => 'Planificación', 'implementation' => 'Implementación', 'maintenance' => 'Mantenimiento']],
+            'planning' => ['name' => 'Planificación', 'categories' => ['discovery' => 'Descubrimiento', 'definition' => 'Definición', 'estimation' => 'Estimación']],
+            'development' => ['name' => 'Desarrollo', 'categories' => ['feature' => 'Funcionalidad', 'bug' => 'Error', 'refactor' => 'Refactorización']],
+            'improvement' => ['name' => 'Mejora', 'categories' => ['process' => 'Proceso', 'performance' => 'Rendimiento', 'experience' => 'Experiencia']],
+            'investigation' => ['name' => 'Investigación', 'categories' => ['research' => 'Investigación', 'analysis' => 'Análisis', 'proof-of-concept' => 'Prueba de concepto']],
         ];
 
-        foreach ($types as $typeName => $categoryNames) {
-            $type = WorkItemType::query()->updateOrCreate(['slug' => Str::slug($typeName)], ['name' => $typeName, 'is_active' => true]);
+        foreach ($types as $typeSlug => $typeData) {
+            $type = WorkItemType::query()->updateOrCreate(
+                ['slug' => $typeSlug],
+                ['name' => $typeData['name'], 'is_active' => true],
+            );
 
-            foreach ($categoryNames as $categoryName) {
-                $type->categories()->updateOrCreate(['slug' => Str::slug($categoryName)], ['name' => $categoryName, 'is_active' => true]);
+            foreach ($typeData['categories'] as $categorySlug => $categoryName) {
+                $type->categories()->updateOrCreate(
+                    ['slug' => $categorySlug],
+                    ['name' => $categoryName, 'is_active' => true],
+                );
             }
         }
     }

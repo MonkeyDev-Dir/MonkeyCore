@@ -15,15 +15,7 @@
             </button>
         </div>
 
-        <x-card bordered shadowless>
-            <div class="py-8 text-center">
-                <div class="mx-auto flex size-14 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-                    <span class="text-2xl font-semibold" aria-hidden="true">✦</span>
-                </div>
-                <h2 class="mt-4 text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('La Mesa de trabajo está lista para comenzar') }}</h2>
-                <p class="mx-auto mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">{{ __('Aquí podrás consultar y organizar los casos del equipo.') }}</p>
-            </div>
-        </x-card>
+        <livewire:work-items.work-items-table />
 
         <livewire:work-items.work-item-modal />
     </div>

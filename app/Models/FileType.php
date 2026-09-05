@@ -11,6 +11,8 @@ class FileType extends Model
 {
     public const ClientLogo = 'client_logo';
 
+    public const WorkItemFollowUpImage = 'work_item_follow_up_image';
+
     /** @return HasMany<StoredFile, $this> */
     public function storedFiles(): HasMany
     {

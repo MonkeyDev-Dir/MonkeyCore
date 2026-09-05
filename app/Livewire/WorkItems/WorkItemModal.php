@@ -100,7 +100,7 @@ class WorkItemModal extends Component
             'categories' => $workItemTypeId = $this->workItemTypeId === null ? collect() : $workItemService->categoriesForType($this->workItemTypeId),
             'clients' => $workItemService->clients(),
             'projects' => $workItemService->projectsForClient($this->clientId),
-            'members' => $workItemService->projectMembers($this->projectId),
+            'users' => $workItemService->users(),
         ]);
     }
 }

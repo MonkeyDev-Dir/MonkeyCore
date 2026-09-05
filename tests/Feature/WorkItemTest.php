@@ -14,9 +14,22 @@ it('defines the stable work item domain values', function () {
         ->and(WorkItemEntryVisibility::cases())->toHaveCount(2);
 });
 
+it('provides the configured colors for work item priorities and statuses', function () {
+    expect(WorkItemPriority::High->label())->toBe(__('Alta'))
+        ->and(WorkItemPriority::High->color())->toBe('bg-orange-500')
+        ->and(WorkItemStatus::Resolved->color())->toContain('bg-emerald-100');
+});
+
 it('seeds the initial work item types and categories', function () {
     $this->seed(WorkItemTypeSeeder::class);
 
-    expect(WorkItemType::query()->where('slug', 'support')->exists())->toBeTrue()
+    expect(WorkItemType::query()->pluck('name')->sort()->values()->all())->toBe([
+        'Desarrollo',
+        'Integración',
+        'Investigación',
+        'Mejora',
+        'Planificación',
+        'Soporte',
+    ])
         ->and(WorkItemType::query()->where('slug', 'development')->firstOrFail()->categories)->toHaveCount(3);
 });

@@ -67,6 +67,18 @@ class WorkItem extends Model
         return $this->belongsToMany(User::class, 'work_item_user', 'work_item_id', 'user_id')->withTimestamps()->withPivot('assigned_at');
     }
 
+    /** @return HasMany<WorkItemFollowUp, $this> */
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(WorkItemFollowUp::class);
+    }
+
+    /** @return HasMany<StoredFile, $this> */
+    public function files(): HasMany
+    {
+        return $this->hasMany(StoredFile::class);
+    }
+
     /** @return HasMany<WorkItemEvent, $this> */
     public function events(): HasMany
     {

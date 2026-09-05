@@ -13,5 +13,9 @@ class FileTypeSeeder extends Seeder
             ['key' => FileType::ClientLogo],
             ['name' => 'Logo de cliente'],
         );
+        FileType::query()->updateOrCreate(
+            ['key' => FileType::WorkItemFollowUpImage],
+            ['name' => 'Imagen de seguimiento'],
+        );
     }
 }

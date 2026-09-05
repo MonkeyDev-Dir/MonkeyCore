@@ -44,15 +44,49 @@
                         @endforeach
                     </x-select.native>
                 </div>
-                <div>
-                    <label for="work-item-assignees" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Responsables') }}</label>
-                    <select id="work-item-assignees" wire:model="assigneeIds" multiple class="min-h-24 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-700 dark:text-white/90" @disabled($projectId === null)>
-                        @forelse($members as $member)
-                            <option wire:key="work-item-member-{{ $member->id }}" value="{{ $member->id }}">{{ $member->name }} {{ $member->lastname }}</option>
-                        @empty
-                            <option disabled>{{ $projectId === null ? __('Selecciona un proyecto') : __('No hay miembros asociados al proyecto') }}</option>
-                        @endforelse
-                    </select>
+                <div x-data="{
+                    search: '',
+                    open: false,
+                    normalize(value) {
+                        return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                    },
+                    selected: @entangle('assigneeIds').live,
+                    toggle(id) {
+                        if (this.selected.includes(id)) {
+                            this.selected = this.selected.filter(selectedId => selectedId !== id);
+                        } else {
+                            this.selected = [...this.selected, id];
+                        }
+
+                        this.search = '';
+                    },
+                    remove(id) {
+                        this.selected = this.selected.filter(selectedId => selectedId !== id);
+                    },
+                }" x-on:click.outside="open = false">
+                    <label for="work-item-assignees-search" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Responsables') }}</label>
+                    <div class="relative" x-on:click="open = true">
+                        <div class="flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border border-gray-300 bg-transparent px-3 py-1.5 focus-within:border-brand-500 dark:border-gray-700 dark:bg-transparent">
+                            @foreach($users as $member)
+                                <span x-show="selected.includes({{ $member->id }})" x-cloak class="inline-flex items-center gap-1 rounded-md bg-brand-100 px-2 py-1 text-xs font-medium text-brand-800 dark:bg-brand-500/10 dark:text-brand-400">
+                                    {{ $member->name }} {{ $member->lastname }}
+                                    <button type="button" x-on:click="remove({{ $member->id }})" class="rounded p-0.5 hover:bg-brand-200 dark:hover:bg-brand-500/20" aria-label="{{ __('Quitar responsable') }}">&times;</button>
+                                </span>
+                            @endforeach
+                            <input id="work-item-assignees-search" x-model="search" x-on:click="open = true" x-on:focus="open = true" x-on:keydown.escape="open = false" type="search" autocomplete="off" placeholder="{{ __('Buscar responsable...' ) }}" class="min-w-32 flex-1 border-0 bg-transparent px-0 py-1 text-sm text-gray-800 outline-none focus:ring-0 dark:text-white/90 dark:placeholder:text-gray-500" />
+                        </div>
+                        <div x-show="open" x-cloak class="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                            @foreach($users as $member)
+                                <button type="button" wire:key="work-item-member-{{ $member->id }}" x-on:click="toggle({{ $member->id }})" x-show="normalize({{ Js::from($member->name.' '.$member->lastname) }}).includes(normalize(search))" class="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800">
+                                    <span>{{ $member->name }} {{ $member->lastname }}</span>
+                                    <span x-show="selected.includes({{ $member->id }})" class="text-brand-500">✓</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    @if($users->isEmpty())
+                        <small class="mt-1 block text-xs text-gray-500 dark:text-gray-400">{{ __('No hay usuarios registrados') }}</small>
+                    @endif
                     @error('assigneeIds')<small class="mt-1 block text-xs text-red-500">{{ $message }}</small>@enderror
                     @error('assigneeIds.*')<small class="mt-1 block text-xs text-red-500">{{ $message }}</small>@enderror
                 </div>
