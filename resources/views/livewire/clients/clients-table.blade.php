@@ -9,7 +9,7 @@
     <x-table :headers="$headers" :rows="$clients" paginate :on-each-side="0">
         @interact('column_name', $client)
             <a href="{{ route('clients.show', ['clientCode' => $client->code]) }}" class="font-semibold text-gray-900 hover:text-brand-600 hover:underline dark:text-white dark:hover:text-brand-400">
-                {{ $client->name }}
+                {{ $client->alias() }}
             </a>
         @endinteract
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -12,6 +13,16 @@ use UnexpectedValueException;
 
 class ApifyCrService
 {
+    /**
+     * @var list<string>
+     */
+    private const REMOVED_PERSON_FIELDS = [
+        'padre',
+        'cedula_padre',
+        'madre',
+        'cedula_madre',
+    ];
+
     /**
      * Consulta los datos disponibles de una persona por su cédula costarricense.
      *
@@ -88,6 +99,8 @@ class ApifyCrService
 
             throw $exception;
         }
+
+        $data = Arr::except($data, self::REMOVED_PERSON_FIELDS);
 
         Log::channel('apifycr')->info('Consulta de persona completada', $context + [
             'duration_ms' => $this->durationInMilliseconds($startedAt),

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
-#[Fillable(['type', 'name', 'legal_name', 'tax_id', 'email', 'phone', 'website', 'details', 'image_path', 'status', 'created_by'])]
+#[Fillable(['type', 'name', 'alias', 'legal_name', 'tax_id', 'email', 'phone', 'website', 'details', 'image_path', 'status', 'created_by'])]
 /**
  * @property-read Collection<int, ClientContact> $contacts
  * @property-read Collection<int, ClientAddress> $addresses
@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $type
  * @property string $code
  * @property string $name
+ * @property string|null $alias
  * @property string|null $legal_name
  * @property string|null $tax_id
  * @property string|null $email
@@ -39,6 +40,11 @@ class Client extends Model
     protected function casts(): array
     {
         return ['created_by' => 'integer'];
+    }
+
+    public function alias(): string
+    {
+        return $this->alias ?? $this->name;
     }
 
     /** @return HasMany<ClientContact, $this> */

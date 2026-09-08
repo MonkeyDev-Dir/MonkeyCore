@@ -31,6 +31,7 @@ class ClientSeeder extends Seeder
         $granitosYMarmoles->fill([
             'type' => 'company',
             'name' => 'Granitos y Mármoles CR',
+            'alias' => null,
             'legal_name' => 'Granitos y Mármoles CR',
             'tax_id' => '3101796338',
             'phone' => PhoneFormatHelper::normalize('8562 6443'),
@@ -67,6 +68,7 @@ class ClientSeeder extends Seeder
         $project->save();
 
         $this->seedMonkeySolutions();
+        $this->seedCatalogoEstilos();
     }
 
     private function seedMonkeySolutions(): void
@@ -80,6 +82,7 @@ class ClientSeeder extends Seeder
         $client->fill([
             'type' => 'company',
             'name' => 'MonkeySolutions',
+            'alias' => null,
             'legal_name' => 'MonkeySolutions',
             'tax_id' => '113420689',
             'email' => 'info@monkeysolutions.co',
@@ -123,7 +126,7 @@ class ClientSeeder extends Seeder
         $this->createProject($client, 'Sitio web');
     }
 
-    private function createProject(Client $client, string $name): Project
+    private function createProject(Client $client, string $name, ?string $description = null): Project
     {
         $project = Project::query()->firstOrNew([
             'client_id' => $client->id,
@@ -134,9 +137,38 @@ class ClientSeeder extends Seeder
             $project->code = RandomHelper::generateUniqueAlphanumeric(7, 'projects', 'PROJ');
         }
 
+        if ($description !== null) {
+            $project->description = $description;
+        }
+
         $project->save();
 
         return $project;
+    }
+
+    private function seedCatalogoEstilos(): void
+    {
+        $client = Client::query()->firstOrNew(['tax_id' => '3101443271']);
+
+        if (! $client->exists) {
+            $client->code = RandomHelper::generateUniqueDigits(6, 'clients');
+        }
+
+        $client->fill([
+            'type' => 'company',
+            'name' => 'Catálogo Estilos',
+            'alias' => 'Estilos',
+            'legal_name' => 'Catálogo Estilos',
+            'tax_id' => '3101443271',
+            'email' => 'info@catalogoestilos.com',
+            'phone' => PhoneFormatHelper::normalize('4101-6400'),
+            'website' => 'https://catalogoestilos.com/',
+            'status' => 'active',
+        ])->save();
+
+        $this->createProject($client, 'Estilos', 'Plataforma de ventas de catálogo');
+        $this->createProject($client, 'Efast', 'Tienda en línea');
+        $this->createProject($client, 'Afiliada', 'Plataforma de gestión para afiliadas');
     }
 
     private function seedClientLogo(Client $client): void

@@ -19,7 +19,17 @@ it('consults a person in Costa Rica through ApifyCR', function () {
             'data' => [
                 'cedula' => '123456789',
                 'nombre' => 'JUAN',
-                'primer_apellido' => 'PEREZ',
+                'apellido1' => 'PEREZ',
+                'apellido2' => 'MORA',
+                'codelec' => '001',
+                'fecha_caduc' => '2030-01-01',
+                'provincia' => 'SAN JOSE',
+                'canton' => 'CENTRAL',
+                'distrito' => 'CARMEN',
+                'padre' => 'JUAN PADRE',
+                'cedula_padre' => '101010101',
+                'madre' => 'JUANA MADRE',
+                'cedula_madre' => '202020202',
             ],
         ]),
     ]);
@@ -30,7 +40,18 @@ it('consults a person in Costa Rica through ApifyCR', function () {
         ->getJson(route('api.v1.people.show', '123456789'))
         ->assertOk()
         ->assertJsonPath('data.cedula', '123456789')
-        ->assertJsonPath('data.nombre', 'JUAN');
+        ->assertJsonPath('data.nombre', 'JUAN')
+        ->assertJsonPath('data.apellido1', 'PEREZ')
+        ->assertJsonPath('data.apellido2', 'MORA')
+        ->assertJsonPath('data.codelec', '001')
+        ->assertJsonPath('data.fecha_caduc', '2030-01-01')
+        ->assertJsonPath('data.provincia', 'SAN JOSE')
+        ->assertJsonPath('data.canton', 'CENTRAL')
+        ->assertJsonPath('data.distrito', 'CARMEN')
+        ->assertJsonMissingPath('data.padre')
+        ->assertJsonMissingPath('data.cedula_padre')
+        ->assertJsonMissingPath('data.madre')
+        ->assertJsonMissingPath('data.cedula_madre');
 
     Http::assertSent(function (Request $request): bool {
         return $request->url() === 'https://tse.apifycr.com/api/v2/cedula?cedula=123456789'

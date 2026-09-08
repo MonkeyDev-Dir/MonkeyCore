@@ -43,7 +43,7 @@ class ClientService
                 $term = '%'.Str::lower(Str::ascii(trim($search))).'%';
 
                 $query->where(function ($query) use ($term): void {
-                    foreach (['name', 'code', 'email'] as $column) {
+                    foreach (['name', 'alias', 'code', 'email'] as $column) {
                         $method = $column === 'name' ? 'whereRaw' : 'orWhereRaw';
                         $query->{$method}($this->accentInsensitiveColumn($column).' LIKE ?', [$term]);
                     }

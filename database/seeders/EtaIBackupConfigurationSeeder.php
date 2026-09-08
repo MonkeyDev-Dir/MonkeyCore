@@ -25,6 +25,7 @@ class EtaIBackupConfigurationSeeder extends Seeder
         $client->fill([
             'type' => 'company',
             'name' => 'Instituto Agropecuario Costarricense S.A.',
+            'alias' => 'IACSA',
             'legal_name' => 'Instituto Agropecuario Costarricense S.A.',
             'status' => 'active',
             'email' => 'info@casc.ed.cr',

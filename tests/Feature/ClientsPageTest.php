@@ -66,6 +66,25 @@ it('searches clients without considering case or accents', function () {
         ->assertDontSee('Cliente diferente');
 });
 
+it('displays the client alias and falls back to the client name', function () {
+    $user = User::factory()->create();
+    $aliasedClient = Client::factory()->create(['name' => 'Nombre legal', 'alias' => 'Nombre corto']);
+    $clientWithoutAlias = Client::factory()->create(['name' => 'Cliente sin alias', 'alias' => null]);
+
+    $table = Livewire::actingAs($user)
+        ->test(ClientsTable::class)
+        ->assertSee('Nombre corto')
+        ->assertSee('Cliente sin alias')
+        ->assertDontSee('Nombre legal');
+
+    $table->set('search', 'corto')
+        ->assertSee('Nombre corto')
+        ->assertDontSee('Cliente sin alias');
+
+    expect($aliasedClient->alias())->toBe('Nombre corto')
+        ->and($clientWithoutAlias->alias())->toBe('Cliente sin alias');
+});
+
 it('saves sanitized rich text in a project description', function () {
     $user = User::factory()->create();
     $client = Client::factory()->create();
