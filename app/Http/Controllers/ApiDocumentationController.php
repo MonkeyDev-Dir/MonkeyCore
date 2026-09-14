@@ -52,6 +52,77 @@ JSON,
         ]);
     }
 
+    public function civilRegistry(): View
+    {
+        return view('pages.api-documentation.civil-registry', [
+            'documentation' => [
+                'title' => __('Consulta civil'),
+                'description' => __('Consulta personas y entidades jurídicas desde el registro civil centralizado del Core.'),
+                'version' => 'v1',
+                'baseUrl' => url('/api/v1'),
+                'authentication' => __('Requiere un token Bearer de una aplicación activa registrado en API Tokens.'),
+                'rateLimit' => __('120 solicitudes por minuto por token.'),
+                'headers' => [
+                    'Authorization: Bearer {token}',
+                    'Accept: application/json',
+                    'Content-Type: application/json',
+                ],
+                'parameterTitle' => __('Cuerpo de la solicitud'),
+                'behavior' => [
+                    __('El Core consulta primero el registro local y solo consulta el proveedor externo cuando el registro no existe o tiene más de dos años.'),
+                    __('Los nombres y apellidos se corrigen con Gemini hasta un máximo de tres intentos.'),
+                    __('Si Gemini no responde correctamente, se aplica formato de nombre propio como respaldo.'),
+                    __('La respuesta no incluye información de padre ni madre.'),
+                ],
+                'endpoints' => [
+                    [
+                        'method' => 'POST',
+                        'path' => '/civil-registry/people',
+                        'description' => __('Consulta la información de una persona por su número de cédula.'),
+                        'parameters' => [[
+                            'name' => 'cedula',
+                            'type' => 'string',
+                            'required' => true,
+                            'description' => __('Número de cédula física de 9 dígitos.'),
+                        ]],
+                    ],
+                    [
+                        'method' => 'POST',
+                        'path' => '/civil-registry/legal-entities',
+                        'description' => __('Consulta la información de una entidad jurídica por su número de cédula.'),
+                        'parameters' => [[
+                            'name' => 'cedula',
+                            'type' => 'string',
+                            'required' => true,
+                            'description' => __('Número de cédula jurídica de 10 dígitos.'),
+                        ]],
+                    ],
+                ],
+                'responses' => [
+                    ['code' => 200, 'description' => __('Solicitud exitosa. La respuesta proviene del registro local o de una sincronización con el proveedor externo.')],
+                    ['code' => 401, 'description' => __('Token ausente, inválido o perteneciente a una aplicación inactiva.')],
+                    ['code' => 404, 'description' => __('No existe información para la cédula solicitada.')],
+                    ['code' => 429, 'description' => __('Se excedió el límite de solicitudes.')],
+                ],
+                'response' => <<<'JSON'
+{
+  "data": {
+    "cedula": "113420689",
+    "nombre": "GILBERTH ANDRES",
+    "tipo": "person",
+    "found": true,
+    "consulted_at": "2026-09-14T06:22:12-06:00"
+  }
+}
+JSON,
+                'examples' => [
+                    'curl' => "curl --request POST \\\n+  --url {$this->documentationUrl('/api/v1/civil-registry/people')} \\\n+  --header 'Accept: application/json' \\\n+  --header 'Authorization: Bearer {token}' \\\n+  --header 'Content-Type: application/json' \\\n+  --data '{\"cedula\":\"113420689\"}'",
+                    'javascript' => "const response = await fetch('{$this->documentationUrl('/api/v1/civil-registry/people')}', {\n  method: 'POST',\n  headers: {\n    Accept: 'application/json',\n    Authorization: 'Bearer {token}',\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({ cedula: '113420689' }),\n});\n\nconst data = await response.json();",
+                ],
+            ],
+        ]);
+    }
+
     private function documentationUrl(string $path): string
     {
         return url($path);

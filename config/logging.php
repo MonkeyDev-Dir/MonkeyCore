@@ -75,11 +75,11 @@ return [
             'replace_placeholders' => true,
         ],
 
-        'apifycr' => [
+        'civil_registry' => [
             'driver' => 'daily',
-            'path' => $requestLogs['apifycr']['path'],
-            'level' => $requestLogs['apifycr']['level'],
-            'max_files' => $requestLogs['apifycr']['max_files'],
+            'path' => $requestLogs['civil_registry']['path'],
+            'level' => $requestLogs['civil_registry']['level'],
+            'max_files' => $requestLogs['civil_registry']['max_files'],
             'replace_placeholders' => true,
         ],
 

@@ -18,6 +18,11 @@ class MenuHelper
                 'path' => '/clients',
             ],
             [
+                'icon' => 'civil-consultation',
+                'name' => __('Consulta civil'),
+                'path' => '/consulta-civil',
+            ],
+            [
                 'icon' => 'task',
                 'name' => __('Respaldos'),
                 'path' => '/backups',
@@ -34,6 +39,10 @@ class MenuHelper
                     [
                         'name' => __('Tipo de cambio'),
                         'path' => '/apis/exchange-rates',
+                    ],
+                    [
+                        'name' => __('Consulta civil'),
+                        'path' => '/apis/civil-registry',
                     ],
                 ],
             ],
@@ -108,6 +117,7 @@ class MenuHelper
             'integrations' => 'plug-zap',
             'api' => 'key-round',
             'apis' => 'brackets',
+            'civil-consultation' => 'file-search',
         ];
 
         if (isset($lucideIcons[$iconName])) {

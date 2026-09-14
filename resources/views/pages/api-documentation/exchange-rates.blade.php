@@ -54,6 +54,22 @@
             </div>
         </x-card>
 
+        @if (isset($documentation['behavior']))
+            <x-card bordered shadowless>
+                <div class="space-y-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Comportamiento de la consulta') }}</h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Estas reglas aplican a todas las consultas del API civil.') }}</p>
+                    </div>
+                    <ul class="list-disc space-y-2 pl-5 text-sm text-gray-600 dark:text-gray-300">
+                        @foreach ($documentation['behavior'] as $rule)
+                            <li>{{ $rule }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </x-card>
+        @endif
+
         <div class="space-y-4">
             <div>
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Endpoints') }}</h2>
@@ -73,7 +89,7 @@
 
                         @if (count($endpoint['parameters']) > 0)
                             <div>
-                                <h3 class="mb-2 text-sm font-medium text-gray-800 dark:text-white/90">{{ __('Parámetros de ruta') }}</h3>
+                                <h3 class="mb-2 text-sm font-medium text-gray-800 dark:text-white/90">{{ $documentation['parameterTitle'] ?? __('Parámetros de ruta') }}</h3>
                                 <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
                                     <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
                                         <thead class="bg-gray-50 dark:bg-gray-900/50">

@@ -44,7 +44,7 @@ it('formats compound names when Gemini is disabled', function () {
         ->toBe('Maria Jose');
 });
 
-it('rejects an invalid Gemini response', function () {
+it('falls back to title case after three invalid Gemini responses', function () {
     config()->set('services.gemini.enabled', true);
     config()->set('services.gemini.api_key', 'test-api-key');
 
@@ -56,6 +56,8 @@ it('rejects an invalid Gemini response', function () {
         ]),
     ]);
 
-    expect(fn () => app(GeminiService::class)->corregirNombreApellido('maria jose'))
-        ->toThrow(UnexpectedValueException::class);
+    expect(app(GeminiService::class)->corregirNombreApellido('maria jose'))
+        ->toBe('Maria Jose');
+
+    Http::assertSentCount(3);
 });

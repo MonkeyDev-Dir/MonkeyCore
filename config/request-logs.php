@@ -2,8 +2,8 @@
 
 return [
 
-    'apifycr' => [
-        'path' => storage_path('logs/request/apifycr.log'),
+    'civil_registry' => [
+        'path' => storage_path('logs/integrations/civil-registry/civil-registry.log'),
         'level' => 'info',
         'max_files' => 30,
     ],

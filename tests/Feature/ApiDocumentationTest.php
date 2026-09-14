@@ -21,6 +21,28 @@ it('redirects guests from exchange rate API documentation', function () {
         ->assertRedirectToRoute('login');
 });
 
+it('shows civil registry API documentation to authenticated users', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('api-docs.civil-registry'))
+        ->assertOk()
+        ->assertViewIs('pages.api-documentation.civil-registry')
+        ->assertSee(__('Consulta civil'))
+        ->assertSee('/api/v1/civil-registry/people')
+        ->assertSee('/api/v1/civil-registry/legal-entities')
+        ->assertSee('POST')
+        ->assertSee(__('Número de cédula física de 9 dígitos.'))
+        ->assertSee(__('Número de cédula jurídica de 10 dígitos.'))
+        ->assertSee(__('Los nombres y apellidos se corrigen con Gemini hasta un máximo de tres intentos.'))
+        ->assertSee(__('Si Gemini no responde correctamente, se aplica formato de nombre propio como respaldo.'))
+        ->assertSee(__('La respuesta no incluye información de padre ni madre.'))
+        ->assertSee('404');
+});
+
+it('redirects guests from civil registry API documentation', function () {
+    $this->get(route('api-docs.civil-registry'))
+        ->assertRedirectToRoute('login');
+});
+
 it('protects the generated OpenAPI specification', function () {
     $this->get(route('scramble.docs.document'))
         ->assertRedirectToRoute('login');

@@ -5,6 +5,7 @@ use App\Livewire\Clients\ClientModal;
 use App\Livewire\Clients\ClientsTable;
 use App\Livewire\Clients\ProjectCredentialModal;
 use App\Livewire\Clients\ProjectModal;
+use App\Models\CivilRegistryRecord;
 use App\Models\Client;
 use App\Models\FileType;
 use App\Models\Project;
@@ -287,6 +288,11 @@ it('fills a company client from the Costa Rica legal entity registry', function 
         ->assertSet('taxId', '1234567890');
 
     Http::assertSent(fn (Request $request): bool => $request->url() === 'https://tse.apifycr.com/api/v2/juridica?cedula=1234567890');
+
+    expect(CivilRegistryRecord::query()
+        ->where('type', CivilRegistryRecord::TypeJuridical)
+        ->where('identification', '1234567890')
+        ->value('name'))->toBe('APIFY LATAM SOCIEDAD ANONIMA');
 });
 
 it('opens the client profile from the clients table', function () {

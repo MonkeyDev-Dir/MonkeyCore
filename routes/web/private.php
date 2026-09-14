@@ -3,6 +3,7 @@
 use App\Http\Controllers\ApiConsumersController;
 use App\Http\Controllers\ApiDocumentationController;
 use App\Http\Controllers\BackupsController;
+use App\Http\Controllers\CivilConsultationController;
 use App\Http\Controllers\ClientsController;
 use App\Http\Controllers\IntegrationsController;
 use App\Http\Controllers\ProfileController;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'pages.home')->middleware('auth')->name('home');
 Route::get('users', [UsersController::class, 'index'])->middleware('auth')->name('users.index');
 Route::get('clients', [ClientsController::class, 'index'])->middleware('auth')->name('clients.index');
+Route::get('consulta-civil', [CivilConsultationController::class, 'index'])->middleware('auth')->name('civil-consultation.index');
 Route::get('work-items', [WorkItemsController::class, 'index'])->middleware('auth')->name('work-items.index');
 Route::get('work-items/{publicCode}', [WorkItemsController::class, 'show'])->middleware('auth')->name('work-items.show');
 Route::get('clients/{clientCode}/backups', [BackupsController::class, 'client'])->middleware('auth')->name('clients.backups');
@@ -39,3 +41,7 @@ Route::get('integrations/api-consumers', [ApiConsumersController::class, 'index'
 Route::get('apis/exchange-rates', [ApiDocumentationController::class, 'exchangeRates'])
     ->middleware('auth')
     ->name('api-docs.exchange-rates');
+
+Route::get('apis/civil-registry', [ApiDocumentationController::class, 'civilRegistry'])
+    ->middleware('auth')
+    ->name('api-docs.civil-registry');

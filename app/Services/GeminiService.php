@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use UnexpectedValueException;
 
@@ -13,9 +12,6 @@ class GeminiService
 {
     /**
      * Corrige la ortografía de un nombre o apellido y conserva una palabra por cada segmento.
-     *
-     * @throws ConnectionException
-     * @throws RequestException
      */
     public function corregirNombreApellido(string $nombreApellido): string
     {
@@ -29,6 +25,40 @@ class GeminiService
             return $this->toTitleCase($nombreApellido);
         }
 
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $correctedName = $this->toTitleCase($this->requestCorrection($nombreApellido));
+
+                Log::channel('civil_registry')->info('Corrección de nombre completada con Gemini', [
+                    'attempt' => $attempt,
+                    'characters' => mb_strlen($nombreApellido),
+                ]);
+
+                return $correctedName;
+            } catch (\Throwable $exception) {
+                Log::channel('civil_registry')->warning('Intento de corrección de nombre fallido', [
+                    'attempt' => $attempt,
+                    'characters' => mb_strlen($nombreApellido),
+                    'exception' => $exception::class,
+                    'error' => $this->safeErrorMessage($exception),
+                ]);
+
+                if ($attempt === 3) {
+                    Log::channel('civil_registry')->error('Corrección de nombre agotó los intentos; se aplicó formato local', [
+                        'attempts' => 3,
+                        'characters' => mb_strlen($nombreApellido),
+                    ]);
+
+                    return $this->toTitleCase($nombreApellido);
+                }
+            }
+        }
+
+        return $this->toTitleCase($nombreApellido);
+    }
+
+    private function requestCorrection(string $nombreApellido): string
+    {
         $response = $this->request()->post(
             '/v1beta/models/'.config('services.gemini.model').':generateContent',
             [
@@ -57,7 +87,7 @@ class GeminiService
             throw new UnexpectedValueException('Gemini devolvió un nombre en un formato inválido.');
         }
 
-        return $this->toTitleCase($data['name']);
+        return $data['name'];
     }
 
     private function toTitleCase(string $value): string
@@ -74,6 +104,17 @@ class GeminiService
         ));
     }
 
+    private function safeErrorMessage(\Throwable $exception): string
+    {
+        $apiKey = config('services.gemini.api_key');
+
+        if (! is_string($apiKey) || $apiKey === '') {
+            return $exception->getMessage();
+        }
+
+        return str_replace($apiKey, '[REDACTED]', $exception->getMessage());
+    }
+
     private function request(): PendingRequest
     {
         $apiKey = config('services.gemini.api_key');
@@ -87,10 +128,6 @@ class GeminiService
         return Http::baseUrl((string) config('services.gemini.base_url'))
             ->withQueryParameters(['key' => $apiKey])
             ->acceptJson()
-            ->retry([200, 500], function (int $attempt, \Throwable $exception): bool {
-                return $exception instanceof ConnectionException
-                    || ($exception instanceof RequestException && $exception->response->serverError());
-            })
             ->timeout($timeout)
             ->connectTimeout(min($timeout, 5));
     }
