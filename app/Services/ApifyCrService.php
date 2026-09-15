@@ -123,6 +123,7 @@ class ApifyCrService
 
         try {
             $data = $this->formatPersonNames($data);
+            $data = $this->normalizePersonDates($data);
         } catch (\Throwable $exception) {
             Log::channel('civil_registry')->error('Corrección de nombres de la persona fallida', $context + [
                 'duration_ms' => $this->durationInMilliseconds($startedAt),
@@ -256,6 +257,18 @@ class ApifyCrService
     }
 
     /** @param array<string, mixed> $data */
+    private function normalizePersonDates(array $data): array
+    {
+        foreach (['fecha_nacimiento', 'fecha_caduc', 'fecha_vencimiento'] as $field) {
+            if (is_string($data[$field] ?? null) && trim($data[$field]) !== '') {
+                $data[$field] = $this->dateValue($data[$field]);
+            }
+        }
+
+        return $data;
+    }
+
+    /** @param array<string, mixed> $data */
     private function storePerson(string $identification, array $data): void
     {
         $this->store(CivilRegistryRecord::TypePerson, $identification, [
@@ -333,7 +346,25 @@ class ApifyCrService
 
     private function dateValue(mixed $value): ?string
     {
-        return is_string($value) && trim($value) !== '' ? $value : null;
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        $date = trim($value);
+
+        foreach (['Y-m-d', 'd/m/Y', 'Ymd'] as $format) {
+            try {
+                $parsedDate = CarbonImmutable::createFromFormat($format, $date);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            if ($parsedDate->format($format) === $date) {
+                return $parsedDate->format('Y-m-d');
+            }
+        }
+
+        return null;
     }
 
     private function durationInMilliseconds(float $startedAt): int

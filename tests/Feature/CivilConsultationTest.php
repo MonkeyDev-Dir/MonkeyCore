@@ -45,6 +45,8 @@ it('consults and stores a civil record when it is not local', function () {
             'cedula' => '987654321',
             'nombre' => 'MARIA',
             'apellido1' => 'LOPEZ',
+            'fecha_nacimiento' => '23/10/1988',
+            'fecha_caduc' => '20300204',
             'provincia' => 'HEREDIA',
         ]),
     ]);
@@ -54,12 +56,20 @@ it('consults and stores a civil record when it is not local', function () {
         ->set('identification', '987654321')
         ->call('consult')
         ->assertSet('result.nombre', 'Maria')
+        ->assertSet('result.fecha_nacimiento', '1988-10-23')
+        ->assertSet('result.fecha_caduc', '2030-02-04')
         ->assertSee('Lopez');
 
     Http::assertSent(fn (Request $request): bool => $request->url() === 'https://tse.apifycr.com/api/v2/cedula?cedula=987654321');
     expect(CivilRegistryRecord::query()
         ->where('identification', '987654321')
         ->value('province'))->toBe('HEREDIA');
+    expect(CivilRegistryRecord::query()
+        ->where('identification', '987654321')
+        ->value('birth_date')?->format('Y-m-d'))->toBe('1988-10-23');
+    expect(CivilRegistryRecord::query()
+        ->where('identification', '987654321')
+        ->value('expiration_date')?->format('Y-m-d'))->toBe('2030-02-04');
 });
 
 it('shows an error when the civil registry provider fails', function () {
