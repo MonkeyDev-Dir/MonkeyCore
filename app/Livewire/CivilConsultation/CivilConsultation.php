@@ -4,6 +4,7 @@ namespace App\Livewire\CivilConsultation;
 
 use App\Models\CivilRegistryRecord;
 use App\Services\ApifyCrService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Component;
@@ -47,6 +48,17 @@ class CivilConsultation extends Component
                 ? $apifyCrService->consultarPersona($validated['identification'])
                 : $apifyCrService->consultarJuridica($validated['identification']);
         } catch (Throwable $exception) {
+            $cause = $exception->getPrevious();
+
+            Log::channel('civil_registry')->error('Consulta civil no completada en la interfaz', [
+                'type' => $validated['type'],
+                'identification' => $this->maskedIdentification($validated['identification']),
+                'exception' => $exception::class,
+                'error' => $exception->getMessage(),
+                'cause_exception' => $cause === null ? null : $cause::class,
+                'cause_error' => $cause?->getMessage(),
+            ]);
+
             report($exception);
             $this->searched = true;
             $this->addError('lookup', __('No fue posible completar la consulta civil.'));
@@ -99,5 +111,10 @@ class CivilConsultation extends Component
         return view('livewire.civil-consultation.civil-consultation', [
             'resultFields' => $this->resultFields(),
         ]);
+    }
+
+    private function maskedIdentification(string $identification): string
+    {
+        return substr($identification, 0, 1).'******'.substr($identification, -2);
     }
 }

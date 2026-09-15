@@ -62,6 +62,22 @@ it('consults and stores a civil record when it is not local', function () {
         ->value('province'))->toBe('HEREDIA');
 });
 
+it('shows an error when the civil registry provider fails', function () {
+    config()->set('services.apifycr.api_key', 'test-api-key');
+
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://tse.apifycr.com/api/v2/cedula?cedula=987654321' => Http::response([], 500),
+    ]);
+
+    Livewire::actingAs(User::factory()->create())
+        ->test(CivilConsultation::class)
+        ->set('identification', '987654321')
+        ->call('consult')
+        ->assertHasErrors(['lookup'])
+        ->assertSet('result', null);
+});
+
 it('rejects an identification with the wrong length for the selected type', function () {
     Livewire::actingAs(User::factory()->create())
         ->test(CivilConsultation::class)

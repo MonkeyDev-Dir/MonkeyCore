@@ -121,8 +121,29 @@ class ApifyCrService
             throw $exception;
         }
 
-        $data = $this->formatPersonNames($data);
-        $this->storePerson($cedula, $data);
+        try {
+            $data = $this->formatPersonNames($data);
+        } catch (\Throwable $exception) {
+            Log::channel('civil_registry')->error('Corrección de nombres de la persona fallida', $context + [
+                'duration_ms' => $this->durationInMilliseconds($startedAt),
+                'stage' => 'name_formatting',
+                'response_fields' => array_keys($data),
+            ] + $this->exceptionContext($exception));
+
+            throw $exception;
+        }
+
+        try {
+            $this->storePerson($cedula, $data);
+        } catch (\Throwable $exception) {
+            Log::channel('civil_registry')->error('Almacenamiento de la consulta de persona fallido', $context + [
+                'duration_ms' => $this->durationInMilliseconds($startedAt),
+                'stage' => 'cache_persistence',
+                'response_fields' => array_keys($data),
+            ] + $this->exceptionContext($exception));
+
+            throw $exception;
+        }
 
         $data = Arr::except($data, self::REMOVED_PERSON_FIELDS);
 
@@ -318,6 +339,19 @@ class ApifyCrService
     private function durationInMilliseconds(float $startedAt): int
     {
         return (int) round((microtime(true) - $startedAt) * 1000);
+    }
+
+    /** @return array{exception: class-string<\Throwable>, error: string, cause_exception: class-string<\Throwable>|null, cause_error: string|null} */
+    private function exceptionContext(\Throwable $exception): array
+    {
+        $cause = $exception->getPrevious();
+
+        return [
+            'exception' => $exception::class,
+            'error' => $exception->getMessage(),
+            'cause_exception' => $cause === null ? null : $cause::class,
+            'cause_error' => $cause?->getMessage(),
+        ];
     }
 
     private function maskCedula(string $cedula): string
