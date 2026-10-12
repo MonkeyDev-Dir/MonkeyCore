@@ -240,7 +240,7 @@ it('fills a person client from the Costa Rica identity registry', function () {
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
+        'https://connect.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
             'status' => 'success',
             'data' => [
                 'cedula' => '123456789',
@@ -262,7 +262,7 @@ it('fills a person client from the Costa Rica identity registry', function () {
         ->assertSet('name', 'Juan Perez Mora')
         ->assertSet('taxId', '123456789');
 
-    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://tse.apifycr.com/api/v2/cedula?cedula=123456789');
+    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://connect.apifycr.com/api/v2/cedula?cedula=123456789');
 });
 
 it('fills a company client from the Costa Rica legal entity registry', function () {
@@ -271,7 +271,7 @@ it('fills a company client from the Costa Rica legal entity registry', function 
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/juridica?cedula=1234567890' => Http::response([
+        'https://connect.apifycr.com/api/v2/juridica?cedula=1234567890' => Http::response([
             'nombre' => 'APIFY LATAM SOCIEDAD ANONIMA',
             'tipoIdentificacion' => '02',
         ]),
@@ -287,7 +287,7 @@ it('fills a company client from the Costa Rica legal entity registry', function 
         ->assertSet('name', 'Apify Latam Sociedad Anonima')
         ->assertSet('taxId', '1234567890');
 
-    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://tse.apifycr.com/api/v2/juridica?cedula=1234567890');
+    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://connect.apifycr.com/api/v2/juridica?cedula=1234567890');
 
     expect(CivilRegistryRecord::query()
         ->where('type', CivilRegistryRecord::TypeJuridical)

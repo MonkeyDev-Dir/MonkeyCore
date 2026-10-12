@@ -16,7 +16,7 @@ it('consults a person in Costa Rica through ApifyCR', function () {
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
+        'https://connect.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
             'status' => 'success',
             'data' => [
                 'cedula' => '123456789',
@@ -56,7 +56,7 @@ it('consults a person in Costa Rica through ApifyCR', function () {
         ->assertJsonMissingPath('data.cedula_madre');
 
     Http::assertSent(function (Request $request): bool {
-        return $request->url() === 'https://tse.apifycr.com/api/v2/cedula?cedula=123456789'
+        return $request->url() === 'https://connect.apifycr.com/api/v2/cedula?cedula=123456789'
             && $request->hasHeader('Authorization', 'Bearer test-api-key');
     });
 
@@ -75,7 +75,7 @@ it('accepts a direct person response from ApifyCR', function () {
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
+        'https://connect.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
             'cedula' => '123456789',
             'nombre' => 'JUAN',
             'apellido1' => 'PEREZ',
@@ -97,7 +97,7 @@ it('reuses a recent person consultation without calling ApifyCR again', function
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
+        'https://connect.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
             'cedula' => '123456789',
             'nombre' => 'JUAN',
             'apellido1' => 'PEREZ',
@@ -152,7 +152,7 @@ it('refreshes an expired person consultation', function () {
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
+        'https://connect.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
             'cedula' => '123456789',
             'nombre' => 'NOMBRE NUEVO',
         ]),
@@ -209,7 +209,7 @@ it('exposes the civil registry legal entities endpoint from the Core', function 
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/juridica?cedula=1234567890' => Http::response([
+        'https://connect.apifycr.com/api/v2/juridica?cedula=1234567890' => Http::response([
             'nombre' => 'EMPRESA CENTRAL',
             'tipoIdentificacion' => '02',
         ]),

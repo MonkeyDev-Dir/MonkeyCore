@@ -230,6 +230,67 @@ class ApifyCrService
         return $data;
     }
 
+    /**
+     * @return array{active: bool, last_run_at: CarbonImmutable|null}
+     */
+    public function integrationStatus(): array
+    {
+        return [
+            'active' => is_string(config('services.apifycr.api_key')) && config('services.apifycr.api_key') !== '',
+            'last_run_at' => CivilRegistryRecord::query()->latest('consulted_at')->first()?->consulted_at,
+        ];
+    }
+
+    /**
+     * @return array{cedula: string, ok: bool, status: int|null, response: mixed, error: string|null, retry_after: int|null}
+     */
+    public function testRandomPersonQuery(): array
+    {
+        $cedula = '113420'.random_int(200, 999);
+
+        try {
+            $response = $this->request()->get('/cedula', [
+                'cedula' => $cedula,
+            ]);
+        } catch (RequestException $exception) {
+            if ($exception->response === null) {
+                return [
+                    'cedula' => $cedula,
+                    'ok' => false,
+                    'status' => null,
+                    'response' => null,
+                    'error' => $exception->getMessage(),
+                    'retry_after' => null,
+                ];
+            }
+
+            $response = $exception->response;
+        } catch (\Throwable $exception) {
+            return [
+                'cedula' => $cedula,
+                'ok' => false,
+                'status' => null,
+                'response' => null,
+                'error' => $exception->getMessage(),
+                'retry_after' => null,
+            ];
+        }
+
+        $payload = $response->json() ?? $response->body();
+        $retryAfter = $response->header('Retry-After');
+
+        return [
+            'cedula' => $cedula,
+            'ok' => $response->successful(),
+            'status' => $response->status(),
+            'response' => $payload,
+            'error' => $response->status() === 429
+                ? (is_array($payload) ? ($payload['error'] ?? 'ApifyCR limitó las solicitudes.') : 'ApifyCR limitó las solicitudes.')
+                : null,
+            'retry_after' => is_numeric($retryAfter) ? max(0, (int) $retryAfter) : null,
+        ];
+    }
+
     private function cachedConsultation(string $type, string $identification): ?CivilRegistryRecord
     {
         return CivilRegistryRecord::query()

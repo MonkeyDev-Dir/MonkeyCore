@@ -45,6 +45,12 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        RateLimiter::for('apifycr-test', function (Request $request): Limit {
+            return Limit::perMinute(1)->by(
+                $request->user()?->email ?? $request->ip(),
+            );
+        });
+
         TallStackUi::customize()
             ->table()
             ->block('wrapper')

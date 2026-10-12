@@ -88,6 +88,17 @@ JSON,
                     ],
                     [
                         'method' => 'POST',
+                        'path' => '/people',
+                        'description' => __('Consulta la información de una persona por su número de cédula mediante el endpoint compatible.'),
+                        'parameters' => [[
+                            'name' => 'cedula',
+                            'type' => 'string',
+                            'required' => true,
+                            'description' => __('Número de cédula física de 9 dígitos.'),
+                        ]],
+                    ],
+                    [
+                        'method' => 'POST',
                         'path' => '/civil-registry/legal-entities',
                         'description' => __('Consulta la información de una entidad jurídica por su número de cédula.'),
                         'parameters' => [[
@@ -101,20 +112,44 @@ JSON,
                 'responses' => [
                     ['code' => 200, 'description' => __('Solicitud exitosa. La respuesta proviene del registro local o de una sincronización con el proveedor externo.')],
                     ['code' => 401, 'description' => __('Token ausente, inválido o perteneciente a una aplicación inactiva.')],
+                    ['code' => 422, 'description' => __('La cédula no cumple con el formato requerido.')],
                     ['code' => 404, 'description' => __('No existe información para la cédula solicitada.')],
+                    ['code' => 502, 'description' => __('El proveedor del registro civil no respondió correctamente.')],
                     ['code' => 429, 'description' => __('Se excedió el límite de solicitudes.')],
                 ],
-                'response' => <<<'JSON'
+                'responseExamples' => [
+                    [
+                        'title' => __('Persona'),
+                        'content' => <<<'JSON'
 {
   "data": {
     "cedula": "113420689",
-    "nombre": "GILBERTH ANDRES",
-    "tipo": "person",
-    "found": true,
-    "consulted_at": "2026-09-14T06:22:12-06:00"
+    "nombre": "Gilberth Andres",
+    "apellido1": "Gonzalez",
+    "apellido2": "Rodriguez",
+    "codelec": "123456",
+    "fecha_nacimiento": "1989-06-12",
+    "fecha_caduc": "2030-06-12",
+    "provincia": "San Jose",
+    "canton": "Central",
+    "distrito": "Carmen"
   }
 }
 JSON,
+                    ],
+                    [
+                        'title' => __('Entidad jurídica'),
+                        'content' => <<<'JSON'
+{
+  "data": {
+    "cedula": "3101123456",
+    "nombre": "EMPRESA DE PRUEBA SOCIEDAD ANONIMA",
+    "tipoIdentificacion": "JURIDICA"
+  }
+}
+JSON,
+                    ],
+                ],
                 'examples' => [
                     'curl' => "curl --request POST \\\n+  --url {$this->documentationUrl('/api/v1/civil-registry/people')} \\\n+  --header 'Accept: application/json' \\\n+  --header 'Authorization: Bearer {token}' \\\n+  --header 'Content-Type: application/json' \\\n+  --data '{\"cedula\":\"113420689\"}'",
                     'javascript' => "const response = await fetch('{$this->documentationUrl('/api/v1/civil-registry/people')}', {\n  method: 'POST',\n  headers: {\n    Accept: 'application/json',\n    Authorization: 'Bearer {token}',\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({ cedula: '113420689' }),\n});\n\nconst data = await response.json();",

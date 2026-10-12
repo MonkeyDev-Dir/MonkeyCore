@@ -36,7 +36,7 @@ return [
     ],
 
     'apifycr' => [
-        'base_url' => env('CIVIL_REGISTRY_API_URL', 'https://tse.apifycr.com/api/v2'),
+        'base_url' => env('CIVIL_REGISTRY_API_URL', 'https://connect.apifycr.com/api/v2'),
         'api_key' => env('CIVIL_REGISTRY_API_TOKEN'),
         'timeout' => (int) env('APIFYCR_TIMEOUT', 8),
         'connect_timeout' => (int) env('APIFYCR_CONNECT_TIMEOUT', 3),

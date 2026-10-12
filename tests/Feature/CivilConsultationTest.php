@@ -41,7 +41,7 @@ it('consults and stores a civil record when it is not local', function () {
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=987654321' => Http::response([
+        'https://connect.apifycr.com/api/v2/cedula?cedula=987654321' => Http::response([
             'cedula' => '987654321',
             'nombre' => 'MARIA',
             'apellido1' => 'LOPEZ',
@@ -60,7 +60,7 @@ it('consults and stores a civil record when it is not local', function () {
         ->assertSet('result.fecha_caduc', '2030-02-04')
         ->assertSee('Lopez');
 
-    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://tse.apifycr.com/api/v2/cedula?cedula=987654321');
+    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://connect.apifycr.com/api/v2/cedula?cedula=987654321');
     expect(CivilRegistryRecord::query()
         ->where('identification', '987654321')
         ->value('province'))->toBe('HEREDIA');
@@ -77,7 +77,7 @@ it('shows an error when the civil registry provider fails', function () {
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=987654321' => Http::response([], 500),
+        'https://connect.apifycr.com/api/v2/cedula?cedula=987654321' => Http::response([], 500),
     ]);
 
     Livewire::actingAs(User::factory()->create())

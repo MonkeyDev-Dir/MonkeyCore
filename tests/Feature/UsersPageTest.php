@@ -131,7 +131,7 @@ it('autocompletes a new user from the Costa Rica identity registry', function ()
 
     Http::preventStrayRequests();
     Http::fake([
-        'https://tse.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
+        'https://connect.apifycr.com/api/v2/cedula?cedula=123456789' => Http::response([
             'status' => 'success',
             'data' => [
                 'cedula' => '123456789',

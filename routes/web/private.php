@@ -35,6 +35,9 @@ Route::post('profile/avatar', [ProfileController::class, 'regenerateAvatar'])
     ->name('profile.avatar');
 Route::get('integrations', [IntegrationsController::class, 'index'])->middleware('auth')->name('integrations.index');
 Route::post('integrations/sync', [IntegrationsController::class, 'sync'])->middleware('auth')->name('integrations.sync');
+Route::post('integrations/apifycr/test', [IntegrationsController::class, 'testApifyCr'])
+    ->middleware(['auth', 'throttle:apifycr-test'])
+    ->name('integrations.apifycr.test');
 Route::get('integrations/api-consumers', [ApiConsumersController::class, 'index'])
     ->middleware('auth')
     ->name('api-consumers.index');

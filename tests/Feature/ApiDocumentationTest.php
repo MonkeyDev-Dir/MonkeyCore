@@ -28,6 +28,7 @@ it('shows civil registry API documentation to authenticated users', function () 
         ->assertViewIs('pages.api-documentation.civil-registry')
         ->assertSee(__('Consulta civil'))
         ->assertSee('/api/v1/civil-registry/people')
+        ->assertSee('/api/v1/people')
         ->assertSee('/api/v1/civil-registry/legal-entities')
         ->assertSee('POST')
         ->assertSee(__('Número de cédula física de 9 dígitos.'))
@@ -35,7 +36,11 @@ it('shows civil registry API documentation to authenticated users', function () 
         ->assertSee(__('Los nombres y apellidos se corrigen con Gemini hasta un máximo de tres intentos.'))
         ->assertSee(__('Si Gemini no responde correctamente, se aplica formato de nombre propio como respaldo.'))
         ->assertSee(__('La respuesta no incluye información de padre ni madre.'))
-        ->assertSee('404');
+        ->assertSee('fecha_nacimiento')
+        ->assertSee('tipoIdentificacion')
+        ->assertSee('404')
+        ->assertSee('422')
+        ->assertSee('502');
 });
 
 it('redirects guests from civil registry API documentation', function () {

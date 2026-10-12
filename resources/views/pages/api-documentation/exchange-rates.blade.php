@@ -146,7 +146,16 @@
         <x-card bordered shadowless>
             <div class="space-y-4">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Ejemplo de respuesta') }}</h2>
-                <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs leading-6 text-gray-100"><code>{{ $documentation['response'] }}</code></pre>
+                @if (isset($documentation['responseExamples']))
+                    @foreach ($documentation['responseExamples'] as $example)
+                        <div>
+                            <h3 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">{{ $example['title'] }}</h3>
+                            <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs leading-6 text-gray-100"><code>{{ $example['content'] }}</code></pre>
+                        </div>
+                    @endforeach
+                @else
+                    <pre class="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs leading-6 text-gray-100"><code>{{ $documentation['response'] }}</code></pre>
+                @endif
             </div>
         </x-card>
 
